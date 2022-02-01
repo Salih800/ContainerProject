@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import logging
 import os
 import shutil
@@ -20,6 +21,18 @@ logging.basicConfig(
 
 logging.info("System started.")
 
+
+def hash(file, blocksize=None):
+    if blocksize is None:
+        blocksize = 65536
+
+    md5 = hashlib.md5()
+    with open(file, "rb") as f:
+        for block in iter(lambda: f.read(blocksize), b""):
+            md5.update(block)
+    return md5.hexdigest()
+
+
 time.sleep(15)
 
 folder_path = '/home/pi/Desktop/files/'
@@ -27,8 +40,10 @@ upload_path = '/home/pi/Desktop/ContainerFiles/'
 url_upload = "https://api2.atiknakit.com/garbagedevice/"
 
 file_id = "15onLiJ9BRDvOac9Ocbvc-PsG59i4HimX"
+url_of_server = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/ContainerServer.py"
 
 destination = os.path.basename(__file__)
+downloaded = "downloaded_file.py"
 is_upload = False
 updated_time = 0
 
@@ -41,17 +56,19 @@ while True:
             updated_time = time.time()
 
             try:
-                downloaded_file = gdown.download(id=file_id, output="downloaded_file.py")
-
-                old_file_md5 = gdown.md5sum(destination)
-                new_file_md5 = gdown.md5sum(downloaded_file)
-
-                if new_file_md5 != old_file_md5:
-                    logging.info("New update found! Changing the code...")
-                    shutil.move(downloaded_file, destination)
-                    subprocess.call(["python", destination])
-                    logging.info("Code change completed. Restarting...")
-                    sys.exit("Shutting down")
+                r = requests.get(url_of_server)
+                if r.status_code == 200:
+                    with open(downloaded, "w") as downloaded_file:
+                        downloaded_file.write(r.text)
+                    
+                    if hash(destination) != hash(downloaded):
+                        logging.info("New update found! Changing the code...")
+                        shutil.move(downloaded, destination)
+                        subprocess.call(["python", destination])
+                        logging.info("Code change completed. Restarting...")
+                        sys.exit("Shutting down")
+                else:
+                    logging.error(f"{r.status_code}")
 
             except Exception:
                 exception_type, exception_object, exception_traceback = sys.exc_info()
