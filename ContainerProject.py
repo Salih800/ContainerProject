@@ -195,6 +195,9 @@ while True:
                         subprocess.call(["python", destination])
                         logging.info("Code change completed. Restarting...")
                         sys.exit("Shutting down")
+                    else:
+                        logging.info("No update found!")
+
                 else:
                     logging.error(f"Github Error: {r.status_code}")
 
