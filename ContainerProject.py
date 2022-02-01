@@ -2,6 +2,7 @@ import logging
 import datetime
 import json
 import os
+import shutil
 import threading
 import sys
 
@@ -9,7 +10,7 @@ import cv2
 import paramiko
 import subprocess
 import time
-import gdown
+# import gdown
 
 import geopy.distance
 import pynmea2
@@ -128,7 +129,9 @@ logging.info("System started")
 
 time.sleep(15)
 
-file_id = '1vA9bilwgRObCULgQMphCSxjQO5CT1unu'
+downloaded = "downloaded_file.py"
+url_of_project = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/ContainerProject.py"
+# file_id = '1vA9bilwgRObCULgQMphCSxjQO5CT1unu'
 destination = os.path.basename(__file__)
 data_type = str
 reader = pynmea2.NMEAStreamReader()
@@ -140,7 +143,7 @@ pTimeConnection = 0
 checkCurrentTime = 0
 pTimeCheck = 0
 take_picture = False
-url_check = "https://api2.atiknakit.com/garbagedeviceHistory"
+# url_check = "https://api2.atiknakit.com/garbagedeviceHistory"
 url_upload = "https://api2.atiknakit.com/garbagedevice/"
 timeout = 10
 picture_folder = "pictures/"
@@ -148,7 +151,6 @@ picture_folder = "pictures/"
 threadKill = False
 filename = None
 save_picture = False
-# threading.Thread(target=capture,name="opencv").start()
 
 try:
     if not os.path.isdir("pictures"):
@@ -173,16 +175,28 @@ while True:
 
     if time.time() - pTimeConnection > 300:
         pTimeConnection = time.time()
-        logging.info(f"Running Code is up to date: 2022-02-01 14:00:00\tMac Address: {mac_address}")
+
+        code_date = datetime.datetime.fromtimestamp(os.path.getmtime(destination))
+        logging.info(f"Running Code is up to date: {code_date}\tMac Address: {mac_address}")
 
     if mac_address is not None:
         try:
             if time.time() - pTimeCheck > 300:
                 pTimeCheck = time.time()
 
-                gdown.download(id=file_id, output=destination)
+                r = requests.get(url_of_project)
+                if r.status_code == 200:
+                    with open(downloaded, "w") as downloaded_file:
+                        downloaded_file.write(r.text)
 
-                logging.info("Code has been updated. Getting values from Internet..")
+                    if hash(destination) != hash(downloaded):
+                        logging.info("New update found! Changing the code...")
+                        shutil.move(downloaded, destination)
+                        subprocess.call(["python", destination])
+                        logging.info("Code change completed. Restarting...")
+                        sys.exit("Shutting down")
+                else:
+                    logging.error(f"Github Error: {r.status_code}")
 
                 values = requests.get(url_upload + mac_address, timeout=timeout).json()
 
@@ -261,7 +275,7 @@ while True:
                             take_picture = False
                             logging.info(f'Garbage is out of reach. Distance is: {round(distance,2)}')
                         elif speed_in_kmh >= 5.0:
-                            logging.info(f'Distance: {round(distance,2)}')
+                            logging.info(f'Distance: {round(distance,2)} meters')
 
                     if not take_picture:
                         distances = []
@@ -271,13 +285,13 @@ while True:
                             distances.append(distance)
                             if distance < detectLocationDistance + 100:
                                 take_picture = True
-                                logging.info(f'Found a close garbage. Distance is: {round(distance,2)}')
+                                logging.info(f'Found a close garbage. Distance is: {round(distance,2)} meters')
                                 break
                         minDistance = min(distances)
                         logging.info(f'Total location check time {round(time.time()-pTimeCheckLocations,2)} seconds and Minimum distance = {round(minDistance,2)} meters')
                     if not save_picture:
                         if take_picture and speed_in_kmh < 5.0:
-                            logging.info(f'Distance Detection Interval: {detectLocationDistance}\tDistance: {round(distance,2)}')
+                            logging.info(f'Distance Detection Interval: {detectLocationDistance}\tDistance: {round(distance,2)} meters')
                             photo_date = date_local.strftime('%Y-%m-%d__%H-%M-%S,,')
                             filename = f'{photo_date}{location_gps[0]},{location_gps[1]}.jpg'
 
@@ -300,7 +314,7 @@ while True:
                             thread_list.append(thread.name)
                         if "opencv" not in thread_list:
                             logging.info("Starting OpenCV")
-                            threading.Thread(target=capture, name="opencv").start()
+                            threading.Thread(target=capture, name="opencv", daemon=True).start()
 
                 elif parsed_data.status == 'V':
                     logging.info(f'Invalid GPS info!!: {parsed_data.status}')
