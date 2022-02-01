@@ -39,7 +39,7 @@ folder_path = '/home/pi/Desktop/files/'
 upload_path = '/home/pi/Desktop/ContainerFiles/'
 url_upload = "https://api2.atiknakit.com/garbagedevice/"
 
-#file_id = "15onLiJ9BRDvOac9Ocbvc-PsG59i4HimX"#
+# file_id = "15onLiJ9BRDvOac9Ocbvc-PsG59i4HimX"#
 url_of_server = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/ContainerServer.py"
 
 destination = os.path.basename(__file__)
