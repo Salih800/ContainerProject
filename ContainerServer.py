@@ -22,7 +22,7 @@ logging.basicConfig(
 logging.info("System started.")
 
 
-def hash(file, blocksize=None):
+def hash_check(file, blocksize=None):
     if blocksize is None:
         blocksize = 65536
 
@@ -61,7 +61,7 @@ while True:
                     with open(downloaded, "w") as downloaded_file:
                         downloaded_file.write(r.text)
                     
-                    if hash(destination) != hash(downloaded):
+                    if hash_check(destination) != hash_check(downloaded):
                         logging.info("New update found! Changing the code...")
                         shutil.move(downloaded, destination)
                         subprocess.call(["python", destination])

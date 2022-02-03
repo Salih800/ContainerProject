@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import datetime
 import json
@@ -29,6 +30,17 @@ logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
     level=logging.ERROR, filename='project.log',
     datefmt='%Y-%m-%d %H:%M:%S')
+
+
+def hash_check(file, blocksize=None):
+    if blocksize is None:
+        blocksize = 65536
+
+    md5 = hashlib.md5()
+    with open(file, "rb") as f:
+        for block in iter(lambda: f.read(blocksize), b""):
+            md5.update(block)
+    return md5.hexdigest()
 
 
 def send_files_to_server(mac_address):
@@ -189,7 +201,7 @@ while True:
                     with open(downloaded, "w") as downloaded_file:
                         downloaded_file.write(r.text)
 
-                    if hash(destination) != hash(downloaded):
+                    if hash_check(destination) != hash_check(downloaded):
                         logging.info("New update found! Changing the code...")
                         shutil.move(downloaded, destination)
                         subprocess.call(["python", destination])
@@ -245,12 +257,13 @@ while True:
                     new_data = gps_data.readline().decode('utf-8', errors='replace')
 
                     for msg in reader.next(new_data):
+                        logging.info("str(msg): ", str(msg))
                         parsed_data = pynmea2.parse(str(msg))
                         data_type = parsed_data.sentence_type
 
             if data_type == "RMC":
                 data_type = str
-                logging.info(f'Received GPS Data: {str(new_data)}')
+                # logging.info(f'Received GPS Data: {str(new_data)}')
 
                 if parsed_data.status == 'A':
                     location_gps = [parsed_data.latitude, parsed_data.longitude]
@@ -258,7 +271,11 @@ while True:
                     logging.info(f"GPS Time: {time_gps}")
                     date_gps = str(parsed_data.datestamp)
                     speed_in_kmh = parsed_data.spd_over_grnd * 1.852
-                    date_local = datetime.datetime.strptime(f"{date_gps} {time_gps}", '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=3)
+                    try:
+                        date_local = datetime.datetime.strptime(f"{date_gps} {time_gps}", '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=3)
+                    except ValueError as vError:
+                        logging.error("value error happened: ",vError)
+                        date_local = datetime.datetime.strptime(f"{date_gps} {time_gps}", '%Y-%m-%d %H:%M:%S.%f') + datetime.timedelta(hours=3)
                     logging.info(f'Datetime of GPS: {date_gps} {time_gps} and Speed: {round(speed_in_kmh,2)} km/s')
 
                     if time.time() - checkCurrentTime > 600:
