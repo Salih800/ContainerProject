@@ -257,7 +257,7 @@ while True:
                     new_data = gps_data.readline().decode('utf-8', errors='replace')
 
                     for msg in reader.next(new_data):
-                        logging.info("str(msg): ", str(msg))
+                        logging.info(f"str(msg): {str(msg)}")
                         parsed_data = pynmea2.parse(str(msg))
                         data_type = parsed_data.sentence_type
 
@@ -268,7 +268,7 @@ while True:
                 if parsed_data.status == 'A':
                     location_gps = [parsed_data.latitude, parsed_data.longitude]
                     time_gps = str(parsed_data.timestamp)
-                    logging.info(f"GPS Time: {time_gps}")
+                    logging.info(f"GPS Time: {time_gps[:7]}")
                     date_gps = str(parsed_data.datestamp)
                     speed_in_kmh = parsed_data.spd_over_grnd * 1.852
                     try:

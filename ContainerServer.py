@@ -81,6 +81,8 @@ while True:
 
         for folder in os.listdir(folder_path):
             total_picture = 0
+            total_location = 0
+            total_logs = 0
             pUploadTime = time.time()
 
             if os.listdir(folder_path + folder):
@@ -117,6 +119,7 @@ while True:
                                 result = s.post(url_upload + folder, files=location)
 
                             if result.status_code == 200:
+                                total_location = total_location + 1
                                 shutil.move(os.path.join(folder_path, folder, file),
                                             os.path.join(upload_path, filename[0], folder, 'locations'))
                                 logging.info(f"{file} uploaded.")
@@ -127,11 +130,12 @@ while True:
                         elif file.endswith('.log'):
                             shutil.move(os.path.join(folder_path, folder, file),
                                         os.path.join(upload_path, filename[0], folder, 'logs'))
+                            total_logs = total_logs + 1
 
-            if total_picture > 0:
-                logging.info(f'{total_picture} Image file uploaded in {round(time.time()-pUploadTime,2)} seconds')
+            if total_picture > 0 or total_location > 0 or total_logs > 0:
+                logging.info(f'{total_picture} Image file, {total_location} Location file and {total_logs} Log file uploaded in {round(time.time()-pUploadTime,2)} seconds')
             else:
-                logging.info(f"There is no picture to upload in {folder}.")
+                logging.info(f"There is no file to upload in {folder}.")
 
         if is_upload:
             logging.info("Trying to upload to gdrive...")
