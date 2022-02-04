@@ -268,7 +268,7 @@ while True:
                 if parsed_data.status == 'A':
                     location_gps = [parsed_data.latitude, parsed_data.longitude]
                     time_gps = str(parsed_data.timestamp)
-                    logging.info(f"GPS Time: {time_gps[:7]}")
+                    logging.info(f"GPS Time: {time_gps[:8]}")
                     date_gps = str(parsed_data.datestamp)
                     speed_in_kmh = parsed_data.spd_over_grnd * 1.852
                     try:
