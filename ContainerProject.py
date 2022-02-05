@@ -329,6 +329,7 @@ while True:
                     else:
                         logging.warning(f"save_picture was {save_picture}")
                         save_picture = True
+                        logging.warning(subprocess.call(["ls", "/dev/video0"]))
 
                     if minDistance >= 200:
                         for thread in threading.enumerate():
