@@ -28,6 +28,11 @@ logging.basicConfig(
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.WARNING, filename='project.log',
+    datefmt='%Y-%m-%d %H:%M:%S')
+
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
     level=logging.ERROR, filename='project.log',
     datefmt='%Y-%m-%d %H:%M:%S')
 
@@ -121,8 +126,11 @@ def capture():
                 startOfPictureSave = time.time()
                 cv2.imwrite(picture_folder+filename, img, [int(cv2.IMWRITE_JPEG_QUALITY), 50])
                 pictureSaveTime = round(time.time() - startOfPictureSave, 2)
-                fileSize = round(os.path.getsize(picture_folder + filename) / 1024, 2)
-                logging.info(f"Saved picture FileSize={fileSize} KB in {pictureSaveTime} seconds: {filename}")
+                if os.path.isfile(picture_folder + filename):
+                    fileSize = round(os.path.getsize(picture_folder + filename) / 1024, 2)
+                    logging.info(f"Saved picture FileSize={fileSize} KB in {pictureSaveTime} seconds: {filename}")
+                else:
+                    logging.warning(f"opencv couldn't find the file: {filename}")
 
             if threadKill:
                 threadKill = False
@@ -211,7 +219,7 @@ while True:
                         logging.info("No update found!")
 
                 else:
-                    logging.error(f"Github Error: {r.status_code}")
+                    logging.warning(f"Github Error: {r.status_code}")
 
                 values = requests.get(url_upload + mac_address, timeout=timeout).json()
 
@@ -257,7 +265,6 @@ while True:
                     new_data = gps_data.readline().decode('utf-8', errors='replace')
 
                     for msg in reader.next(new_data):
-                        logging.info(f"str(msg): {str(msg)}")
                         parsed_data = pynmea2.parse(str(msg))
                         data_type = parsed_data.sentence_type
 
@@ -268,14 +275,15 @@ while True:
                 if parsed_data.status == 'A':
                     location_gps = [parsed_data.latitude, parsed_data.longitude]
                     time_gps = str(parsed_data.timestamp)
-                    logging.info(f"GPS Time: {time_gps[:8]}")
+                    # logging.info(f"GPS Time: {time_gps[:8]}")
                     date_gps = str(parsed_data.datestamp)
                     speed_in_kmh = parsed_data.spd_over_grnd * 1.852
-                    try:
-                        date_local = datetime.datetime.strptime(f"{date_gps} {time_gps}", '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=3)
-                    except ValueError as vError:
-                        logging.error("value error happened: ",vError)
-                        date_local = datetime.datetime.strptime(f"{date_gps} {time_gps}", '%Y-%m-%d %H:%M:%S.%f') + datetime.timedelta(hours=3)
+                    date_local = datetime.datetime.strptime(f"{date_gps} {time_gps[:8]}", '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=3)
+                    # try:
+                    #     pass
+                    # except ValueError as vError:
+                    #     logging.error("value error happened: ",vError)
+                    #     date_local = datetime.datetime.strptime(f"{date_gps} {time_gps}", '%Y-%m-%d %H:%M:%S.%f') + datetime.timedelta(hours=3)
                     logging.info(f'Datetime of GPS: {date_gps} {time_gps} and Speed: {round(speed_in_kmh,2)} km/s')
 
                     if time.time() - checkCurrentTime > 600:
@@ -319,7 +327,8 @@ while True:
 
                             time.sleep(1)
                     else:
-                        logging.error(f"save_picture was {save_picture}")
+                        logging.warning(f"save_picture was {save_picture}")
+                        save_picture = True
 
                     if minDistance >= 200:
                         for thread in threading.enumerate():
@@ -337,7 +346,7 @@ while True:
                             threading.Thread(target=capture, name="opencv", daemon=True).start()
 
                 elif parsed_data.status == 'V':
-                    logging.info(f'Invalid GPS info!!: {parsed_data.status}')
+                    logging.warning(f'Invalid GPS info!!: {parsed_data.status}')
                     time.sleep(5)
         except Exception:
             exception_type, exception_object, exception_traceback = sys.exc_info()
