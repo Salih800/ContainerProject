@@ -115,14 +115,14 @@ while True:
                             with open(folder_path + folder + '/' + file, 'rb') as location_file:
 
                                 location = {'location': (file, location_file, 'multipart/form-data', {'Expires': '0'})}
-                                logging.info("Trying to upload 'locations.txt'...")
+                                # logging.info("Trying to upload 'locations.txt'...")
                                 result = s.post(url_upload + folder, files=location)
 
                             if result.status_code == 200:
                                 total_location = total_location + 1
                                 shutil.move(os.path.join(folder_path, folder, file),
                                             os.path.join(upload_path, filename[0], folder, 'locations'))
-                                logging.info(f"{file} uploaded.")
+                                # logging.info(f"{file} uploaded.")
 
                             else:
                                 logging.error(result.status_code)
@@ -139,8 +139,9 @@ while True:
 
         if is_upload:
             logging.info("Trying to upload to gdrive...")
+            pUploadTime = time.time()
             subprocess.check_call(["rclone", "move", f"{upload_path}/", f"gdrive:Python/ContainerFiles/"])
-            logging.info("Gdrive upload is completed.")
+            logging.info(f"Gdrive upload is completed in {round(time.time()-pUploadTime,2)} seconds.")
             is_upload = False
 
     except Exception:
