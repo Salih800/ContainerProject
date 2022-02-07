@@ -324,7 +324,7 @@ while True:
                             filename = f'{photo_date}{location_gps[0]},{location_gps[1]}.jpg'
 
                             save_picture = True
-                            logging.warning(subprocess.call(["ls", "/dev/video0"]))
+                            # logging.warning(subprocess.call(["ls", "/dev/video0"]))
                             time.sleep(1)
                     else:
                         logging.warning(f"save_picture was {save_picture}")
