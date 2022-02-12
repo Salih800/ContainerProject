@@ -48,7 +48,7 @@ def hash_check(file, blocksize=None):
     return md5.hexdigest()
 
 
-def send_files_to_server(mac_address):
+def send_files_to_server(upload_dir):
     global pTimeLog
     folder_name = '/home/pi/Desktop/pictures/'
     # folder_name = 'C:/Users/Salih/Downloads/pictures/'
@@ -58,22 +58,22 @@ def send_files_to_server(mac_address):
         ssh_client = paramiko.SSHClient()
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh_client.connect(hostname='192.168.1.199', username='pi', password='raspberry', timeout=10)
-        ssh_client.exec_command(f"mkdir Desktop/files;mkdir Desktop/files/{mac_address}")
+        ssh_client.exec_command(f"mkdir Desktop/files;mkdir Desktop/files/{upload_dir}")
         ftp_client = ssh_client.open_sftp()
 
         oldTime = time.time()
         if time.time() - pTimeLog > 300:
             pTimeLog = time.time()
-            ftp_client.put('/home/pi/Desktop/project.log', f"/home/pi/Desktop/files/{mac_address}/{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S_')}project.log")
+            ftp_client.put('/home/pi/Desktop/project.log', f"/home/pi/Desktop/files/{upload_dir}/{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S_')}project.log")
             logging.info("'project.log' uploaded.")
             with open('project.log', 'r+') as file:
                 file.truncate()
         if os.path.isfile('locations.txt'):
-            ftp_client.put('/home/pi/Desktop/locations.txt', f"/home/pi/Desktop/files/{mac_address}/{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S_')}locations.txt")
+            ftp_client.put('/home/pi/Desktop/locations.txt', f"/home/pi/Desktop/files/{upload_dir}/{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S_')}locations.txt")
             os.remove('/home/pi/Desktop/locations.txt')
             logging.info("'locations.txt' uploaded.")
         for file in files:
-            ftp_client.put(folder_name+file, f'/home/pi/Desktop/files/{mac_address}/'+file)
+            ftp_client.put(folder_name+file, f'/home/pi/Desktop/files/{upload_dir}/'+file)
             os.remove(folder_name+file)
         passedTime = time.time() - oldTime
 
@@ -86,10 +86,10 @@ def send_files_to_server(mac_address):
             ssh_client = paramiko.SSHClient()
             ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             ssh_client.connect(hostname='192.168.1.199', username='pi', password='raspberry', timeout=10)
-            ssh_client.exec_command(f"mkdir Desktop/files;mkdir Desktop/files/{mac_address}")
+            ssh_client.exec_command(f"mkdir Desktop/files;mkdir Desktop/files/{upload_dir}")
             ftp_client = ssh_client.open_sftp()
 
-            ftp_client.put('/home/pi/Desktop/project.log', f"/home/pi/Desktop/files/{mac_address}/{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S_')}project.log")
+            ftp_client.put('/home/pi/Desktop/project.log', f"/home/pi/Desktop/files/{upload_dir}/{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S_')}project.log")
             with open('project.log', 'r+') as file:
                 file.truncate()
             logging.info("'project.log' uploaded.")
@@ -171,8 +171,10 @@ picture_folder = "pictures/"
 threadKill = False
 filename = None
 save_picture = False
+hostname = "empty"
 
 try:
+    hostname = subprocess.check_output(["hostname"]).decode("utf-8").strip("\n")
     if not os.path.isdir("pictures"):
         logging.info("Making 'pictures' folder")
         os.mkdir("pictures")
@@ -221,7 +223,7 @@ while True:
                 else:
                     logging.warning(f"Github Error: {r.status_code}")
 
-                values = requests.get(url_upload + mac_address, timeout=timeout).json()
+                values = requests.get(url_upload + hostname, timeout=timeout).json()
 
                 with open('values.txt', 'w') as jsonfile:
                     json.dump(values, jsonfile)
@@ -245,7 +247,7 @@ while True:
             logging.info("Trying to upload files to Server")
             uploadStartTime = time.time()
             old_file_count = len(os.listdir(picture_folder))
-            send_files_to_server(mac_address)
+            send_files_to_server(hostname)
             logging.info(f'{len(os.listdir(picture_folder)) - old_file_count} picture uploaded in {round(time.time()-uploadStartTime,2)}')
         except Exception:
             exception_type, exception_object, exception_traceback = sys.exc_info()
