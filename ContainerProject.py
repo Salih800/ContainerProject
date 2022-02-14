@@ -145,6 +145,17 @@ def capture():
         line_number = exception_traceback.tb_lineno
         logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
+def internet_on(url_check):
+    global connection
+    try:
+        connection = requests.get(url_check)
+        connection = True
+        logging.info("Internet Connected")
+
+    except Exception as e:
+        print(e)
+        connection = False
+
 
 logging.info("System started")
 
@@ -168,6 +179,7 @@ take_picture = False
 url_upload = "https://api2.atiknakit.com/garbagedevice/"
 timeout = 10
 picture_folder = "pictures/"
+connection = False
 
 threadKill = False
 filename = None
@@ -205,6 +217,7 @@ if hostname is "empty":
 logging.info(f"Hostname: {hostname}\tGPS Port: {gps_port}")
 
 while True:
+    threading.Thread(target=internet_on, args=url_upload)
     mac_address = get_mac_address()
 
     if time.time() - pTimeConnection > 300:
@@ -213,7 +226,8 @@ while True:
         code_date = datetime.datetime.fromtimestamp(os.path.getmtime(destination))
         logging.info(f"Running Code is up to date: {code_date}\tMac Address: {mac_address}")
 
-    if mac_address is not None:
+    if connection:
+    # if mac_address is not None:
         try:
             if time.time() - pTimeCheck > 300:
                 pTimeCheck = time.time()
@@ -253,8 +267,7 @@ while True:
             error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
             line_number = exception_traceback.tb_lineno
             logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
-
-    if mac_address is not None:
+    if connection:
         try:
             logging.info("Trying to upload files to Server")
             uploadStartTime = time.time()
@@ -270,7 +283,7 @@ while True:
             logging.info(f'{old_file_count - len(os.listdir(picture_folder))} picture uploaded in {round(time.time()-uploadStartTime,2)}')
         time.sleep(30)
 
-    if mac_address is None:
+    if not connection:
 
         try:
             while data_type != 'RMC':
