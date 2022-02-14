@@ -152,9 +152,12 @@ def internet_on(url_check):
         connection = True
         logging.info("Internet Connected")
 
-    except Exception as e:
-        print(e)
-        connection = False
+    except Exception:
+        exception_type, exception_object, exception_traceback = sys.exc_info()
+        error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
+        line_number = exception_traceback.tb_lineno
+        logging.error(
+            f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
 
 logging.info("System started")
