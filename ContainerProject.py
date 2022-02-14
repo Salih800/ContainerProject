@@ -145,10 +145,12 @@ def capture():
         line_number = exception_traceback.tb_lineno
         logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
-def internet_on(url_check):
+
+def internet_on():
     global connection
+    global url_upload
     try:
-        connection = requests.get(url_check)
+        connection = requests.get(url_upload)
         connection = True
         logging.info("Internet Connected")
 
@@ -215,12 +217,13 @@ except Exception:
     line_number = exception_traceback.tb_lineno
     logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
-if hostname is "empty":
+if hostname == "empty":
     logging.error(f"Hostname is {hostname}")
 logging.info(f"Hostname: {hostname}\tGPS Port: {gps_port}")
 
 while True:
-    threading.Thread(target=internet_on, args=url_upload).start()
+
+    threading.Thread(target=internet_on).start()
     mac_address = get_mac_address()
 
     if time.time() - pTimeConnection > 300:
