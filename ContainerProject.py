@@ -17,6 +17,7 @@ import geopy.distance
 import pynmea2
 import requests
 import serial
+import serial.tools.list_ports
 from getmac import get_mac_address
 
 # hello_21-12-2021
@@ -172,8 +173,16 @@ threadKill = False
 filename = None
 save_picture = False
 hostname = "empty"
+gps_port = "empty"
+com_ports = serial.tools.list_ports.comports()
 
 try:
+    for port, desc, hwid in sorted(com_ports):
+        if "ACM0" in port:
+            gps_port = port
+        elif "AMA0" in port:
+            gps_port = port
+
     hostname = subprocess.check_output(["hostname"]).decode("utf-8").strip("\n")
     if not os.path.isdir("pictures"):
         logging.info("Making 'pictures' folder")
@@ -265,7 +274,7 @@ while True:
 
         try:
             while data_type != 'RMC':
-                with serial.Serial(port="/dev/ttyACM0", baudrate=9600, bytesize=8, timeout=1,
+                with serial.Serial(port=gps_port, baudrate=9600, bytesize=8, timeout=1,
                                    stopbits=serial.STOPBITS_ONE) as gps_data:
                     new_data = gps_data.readline().decode('utf-8', errors='replace')
 
