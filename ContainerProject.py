@@ -155,6 +155,7 @@ def internet_on():
         logging.info("Internet Connected")
 
     except Exception:
+        connection = False
         exception_type, exception_object, exception_traceback = sys.exc_info()
         error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
         line_number = exception_traceback.tb_lineno
