@@ -202,7 +202,7 @@ except Exception:
 
 if hostname is "empty":
     logging.error(f"Hostname is {hostname}")
-logging.info(f"Hostname: {hostname}")
+logging.info(f"Hostname: {hostname}\tGPS Port: {gps_port}")
 
 while True:
     mac_address = get_mac_address()
