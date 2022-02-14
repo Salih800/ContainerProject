@@ -220,7 +220,7 @@ if hostname is "empty":
 logging.info(f"Hostname: {hostname}\tGPS Port: {gps_port}")
 
 while True:
-    threading.Thread(target=internet_on, args=url_upload)
+    threading.Thread(target=internet_on, args=url_upload).start()
     mac_address = get_mac_address()
 
     if time.time() - pTimeConnection > 300:
