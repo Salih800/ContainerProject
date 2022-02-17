@@ -150,4 +150,4 @@ while True:
         line_number = exception_traceback.tb_lineno
         logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
-    time.sleep(600)
+    time.sleep(1800)
