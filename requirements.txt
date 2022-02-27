@@ -1,0 +1,6 @@
+geopy>=2.2.0
+opencv_contrib_python>=4.5.5.62
+paramiko>=2.9.2
+pynmea2>=1.18.0
+pyserial>=3.5
+requests>=2.27.1
