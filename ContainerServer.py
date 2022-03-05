@@ -111,6 +111,20 @@ while True:
                             else:
                                 logging.error(result.status_code)
 
+                        if file.endswith('.mp4'):
+                            with open(f"{folder_path}{folder}/{file}", 'rb') as video:
+                                files = {'file': (file, video, 'multipart/form-data', {'Expires': '0'})}
+
+                                result = s.post(url_upload + folder, files=files)
+
+                            if result.status_code == 200:
+                                total_picture = total_picture + 1
+                                shutil.move(os.path.join(folder_path, folder, file),
+                                            os.path.join(upload_path, filename[0], folder, 'pictures'))
+
+                            else:
+                                logging.error(result.status_code)
+
                         elif file.endswith('.txt'):
                             with open(folder_path + folder + '/' + file, 'rb') as location_file:
 
