@@ -416,7 +416,7 @@ while True:
                 time_gps = str(parsed_data.timestamp)
                 date_gps = str(parsed_data.datestamp)
                 speed_in_kmh = round(parsed_data.spd_over_grnd * 1.852, 3)
-                date_local = datetime.datetime.strftime(f"{date_gps} {time_gps[:8]}",
+                date_local = datetime.datetime.strptime(f"{date_gps} {time_gps[:8]}",
                                                         '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=3)
                 logging.info(f'Datetime of GPS: {date_gps} {time_gps} and Speed: {round(speed_in_kmh, 2)} km/s')
 
@@ -428,7 +428,7 @@ while True:
                 if time.time() - saveLocationTime > 5:
                     saveLocationTime = time.time()
                     # location_data = f'{date_local};{location_gps[0]},{location_gps[1]};{round(speed_in_kmh, 3)}'
-                    location_data = {"date": date_local.strptime("%Y-%m-%d %H-%M-%S"), "lat": location_gps[0], "lng": location_gps[1], "speed": speed_in_kmh}
+                    location_data = {"date": date_local.strftime("%Y-%m-%d %H-%M-%S"), "lat": location_gps[0], "lng": location_gps[1], "speed": speed_in_kmh}
                     if connection:
                         threading.Thread(target=upload_data, kwargs={"file_type": "location", "file_data": location_data}, daemon=True).start()
                     else:
