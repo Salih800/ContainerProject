@@ -105,6 +105,8 @@ while True:
 
                             if result.status_code == 200:
                                 total_picture = total_picture + 1
+                                if os.path.isfile(os.path.join(upload_path, filename[0], folder, 'pictures', file)):
+                                    os.remove(os.path.join(upload_path, filename[0], folder, 'pictures', file))
                                 shutil.move(os.path.join(folder_path, folder, file),
                                             os.path.join(upload_path, filename[0], folder, 'pictures'))
 
@@ -119,6 +121,8 @@ while True:
 
                             if result.status_code == 200:
                                 total_picture = total_picture + 1
+                                if os.path.isfile(os.path.join(upload_path, filename[0], folder, 'pictures', file)):
+                                    os.remove(os.path.join(upload_path, filename[0], folder, 'pictures', file))
                                 shutil.move(os.path.join(folder_path, folder, file),
                                             os.path.join(upload_path, filename[0], folder, 'pictures'))
 
