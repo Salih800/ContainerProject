@@ -212,8 +212,12 @@ def capture():
                     if os.path.isfile(f'{files_folder}/{filename}.{video_type}'):
                         video_record_time = round(time.time() - start_of_video_record, 2)
                         file_size = round(os.path.getsize(f'{files_folder}/{filename}.{video_type}') / (1024 * 1024), 2)
-                        logging.info(
-                            f"Recorded video FileSize={file_size} MB in {video_record_time} seconds and Total {frame_count} frames: {filename}")
+                        if file_size < (1/1024):
+                            logging.warning(f"Recorded file size is too small! File size: {file_size} MB")
+                            os.remove(f'{picture_folder}{filename}.{video_type}')
+                        else:
+                            logging.info(f"Recorded video FileSize={file_size} MB in {video_record_time} seconds and Total {frame_count} frames: {filename}")
+
                         if connection:
                             threading.Thread(target=upload_data,
                                              kwargs={"file_type": "video", "file_path": f'{files_folder}/{filename}.{video_type}'},
