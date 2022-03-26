@@ -8,7 +8,6 @@ import threading
 import sys
 
 import cv2
-import paramiko
 import subprocess
 import time
 
@@ -16,6 +15,10 @@ import geopy.distance
 import pynmea2
 import requests
 import serial
+
+import base64
+import socket
+import imutils
 
 # hello_21-12-2021
 
@@ -159,6 +162,43 @@ def check_folder():
         logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
 
+def stream_to_server():
+    global stream, hostname, server
+    host = "93.113.96.30"
+    port = 8181
+    BUFF_SIZE = 65536
+    WIDTH = 640
+
+    try:
+        logging.info("Trying to connect to Streaming Server")
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.connect((host, port))
+        id_message = bytes("$" + hostname + "$", "utf-8")
+        server.sendall(id_message)
+        logging.info("Message sent to the Server")
+
+        while True:
+            server_msg = server.recv(BUFF_SIZE)
+            if server_msg == b"$start$":
+                stream = True
+                logging.info("Start stream komutu verildi")
+
+            elif server_msg == b"$stop$":
+                stream = False
+                print("Stop stream komutu verildi")
+
+            else:
+                logging.warning(f"Unknown message from server: {server_msg}")
+
+    except Exception:
+        exception_type, exception_object, exception_traceback = sys.exc_info()
+        error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
+        line_number = exception_traceback.tb_lineno
+        logging.error(
+            f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
+        time.sleep(5)
+
+
 def capture():
     try:
         logging.info("Trying to open camera")
@@ -182,12 +222,27 @@ def capture():
 
         video_save = False
         frame_count = 0
+        streaming_width = 640
 
         while True:
             ret, img = cap.read()
             if not ret:
                 logging.error("ret was False")
                 break
+
+            if stream:
+                try:
+                    frame = imutils.resize(img, width=streaming_width)
+                    encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
+                    bosluk = b"$"
+                    message = bosluk + base64.b64encode(buffer) + bosluk
+                    server.sendall(message)
+                except Exception:
+                    exception_type, exception_object, exception_traceback = sys.exc_info()
+                    error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
+                    line_number = exception_traceback.tb_lineno
+                    logging.error(
+                        f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
             if save_picture:
                 if not video_save:
@@ -253,8 +308,10 @@ def internet_on():
             if "check_folder" not in thread_list_folder:
                 logging.info("Checking folder...")
                 threading.Thread(target=check_folder, name="check_folder", daemon=True).start()
-            else:
-                logging.warning("'check_folder' thread exist in thread_list!")
+            if "stream_to_server" not in thread_list_folder:
+                logging.info("Streaming Thread is starting...")
+                threading.Thread(target=stream_to_server, name="stream_to_server", daemon=True).start()
+
             logging.info("Internet Connected")
 
     except requests.exceptions.ConnectionError:
@@ -307,6 +364,8 @@ filename = None
 save_picture = False
 hostname = "empty"
 id_number = None
+stream = False
+server = None
 
 try:
     subprocess.check_call(["ls", "/dev/ttyACM0"])
@@ -334,6 +393,7 @@ except Exception:
         f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
 logging.info(f"Hostname: {hostname}\tPort: {gps_port}")
+
 
 while True:
     try:
