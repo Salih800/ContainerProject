@@ -219,9 +219,9 @@ def capture():
         global filename
         global picture_folder
         global threadKill
+        global frame_count
 
         video_save = False
-        frame_count = 0
         streaming_width = 640
 
         while True:
@@ -308,6 +308,9 @@ def internet_on():
             if "check_folder" not in thread_list_folder:
                 logging.info("Checking folder...")
                 threading.Thread(target=check_folder, name="check_folder", daemon=True).start()
+            if "opencv" not in thread_list_folder:
+                logging.info("Starting OpenCV")
+                threading.Thread(target=capture, name="opencv", daemon=True).start()
             if "stream_to_server" not in thread_list_folder:
                 logging.info("Streaming Thread is starting...")
                 threading.Thread(target=stream_to_server, name="stream_to_server", daemon=True).start()
@@ -366,6 +369,7 @@ hostname = "empty"
 id_number = None
 stream = False
 server = None
+frame_count = 0
 
 try:
     subprocess.check_call(["ls", "/dev/ttyACM0"])
@@ -519,6 +523,7 @@ while True:
                             logging.info(f'Distance Detection Interval: {detectLocationDistance}')
                             video_date = date_local.strftime('%Y-%m-%d__%H-%M-%S,,')
                             filename = f'{video_date}{location_gps[0]},{location_gps[1]},{id_number}'
+                            frame_count = 0
                             save_picture = True
                             break
 
@@ -526,19 +531,19 @@ while True:
                     logging.info(
                         f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds and Minimum distance = {round(minDistance, 2)} meters')
 
-                if minDistance >= 200:
-                    for thread in threading.enumerate():
-                        if thread.name == "opencv":
-                            logging.info("Killing OpenCV")
-                            threadKill = True
-
-                else:
-                    thread_list = []
-                    for thread in threading.enumerate():
-                        thread_list.append(thread.name)
-                    if "opencv" not in thread_list:
-                        logging.info("Starting OpenCV")
-                        threading.Thread(target=capture, name="opencv", daemon=True).start()
+                # if minDistance >= 200:
+                #     for thread in threading.enumerate():
+                #         if thread.name == "opencv":
+                #             logging.info("Killing OpenCV")
+                #             threadKill = True
+                #
+                # else:
+                #     thread_list = []
+                #     for thread in threading.enumerate():
+                #         thread_list.append(thread.name)
+                #     if "opencv" not in thread_list:
+                #         logging.info("Starting OpenCV")
+                #         threading.Thread(target=capture, name="opencv", daemon=True).start()
 
             elif parsed_data.status == 'V':
                 logging.warning(f'Invalid GPS info!!: {parsed_data.status}')
