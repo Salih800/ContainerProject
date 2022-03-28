@@ -62,6 +62,7 @@ def upload_data(file_type, file_path=None, file_data=None):
 
                 result = requests.post(url_harddrive, files=files)
                 status_code = result.status_code
+                logging.info(f"result.json(): {result.json()}")
                 status = result.json()["status"]
 
             if status_code == 200 and status == "success":
