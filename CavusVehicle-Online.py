@@ -61,7 +61,8 @@ def upload_data(file_type, file_path=None, file_data=None):
                 files = {'file': (file_name, video, 'multipart/form-data', {'Expires': '0'})}
 
                 result = requests.post(url_harddrive, files=files)
-                status_code, status = result.status_code, result.json()["status"]
+                status_code = result.status_code
+                status = result.json()["status"]
 
             if status_code == 200 and status == "success":
                 uploaded_file = result.json()["filename"]
