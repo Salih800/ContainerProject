@@ -53,6 +53,22 @@ def get_date():
     return datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S_')
 
 
+def write_json(json_data, json_file_name='locations.json'):
+    if not os.path.isfile(f"{files_folder}/{json_file_name}"):
+        with open(f"{files_folder}/{json_file_name}", "w"):
+            pass
+
+    json_data = json.dumps(json_data)
+    with open(f"{files_folder}/{json_file_name}", 'r+') as file:
+        data = file.read()
+        if len(data) < 1:
+            data = f"[{json_data}]"
+        else:
+            file.seek(len(data)-1)
+            data = f",{json_data}]"
+        file.write(data)
+
+
 def upload_data(file_type, file_path=None, file_data=None):
     try:
         if file_type == "video":
@@ -75,6 +91,9 @@ def upload_data(file_type, file_path=None, file_data=None):
 
                 try:
                     result = requests.post(url_image + hostname, json=file_data)
+                    if not result.status_code == 200:
+                        logging.warning(f"Video Name couldn't uploaded! Status Code: {result.status_code}")
+                        write_json(file_data, "uploaded_videos.json")
                 except Exception:
                     exception_type, exception_object, exception_traceback = sys.exc_info()
                     error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
@@ -82,20 +101,17 @@ def upload_data(file_type, file_path=None, file_data=None):
                     logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
                     logging.warning(f"Video Name couldn't uploaded! Saving to file...")
-                    with open(f"{files_folder}/uploaded_files.txt", "a") as uploaded_files:
-                        uploaded_files.write(f"{file_data}\n")
-
-                if not result.status_code == 200:
-                    logging.warning(f"Video Name couldn't uploaded! Status Code: {result.status_code}")
-                    with open(f"{files_folder}/uploaded_files.txt","a") as uploaded_files:
-                        uploaded_files.write(f"{file_data}\n")
+                    write_json(file_data, "uploaded_videos.json")
 
             else:
-                logging.error(f"Status Code: {result.status_code}\tStatus: {result.json()}")
+                logging.error(f"Video file couldn't uploaded! Status Code: {result.status_code}\tStatus: {result.json()}")
 
         elif file_type == "location":
             try:
                 result = requests.post(url_location + hostname, json=file_data)
+                if not result.status_code == 200:
+                    logging.warning(f"location couldn't uploaded! Status Code: {result.status_code}")
+                    write_json(file_data, "locations.json")
             except Exception:
                 exception_type, exception_object, exception_traceback = sys.exc_info()
                 error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
@@ -103,41 +119,29 @@ def upload_data(file_type, file_path=None, file_data=None):
                 logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
                 logging.warning(f"Location couldn't uploaded! Saving to file...")
-                with open(f"{files_folder}/locations.txt", "a") as locations_file:
-                    locations_file.write(f"{file_data}\n")
-
-            if not result.status_code == 200:
-                logging.warning(f"location couldn't uploaded! Status Code: {result.status_code}")
-                with open(f"{files_folder}/locations.txt","a") as locations_file:
-                    locations_file.write(f"{file_data}\n")
+                write_json(file_data, "locations.json")
 
         elif file_type == "locations":
-            location_json_list = []
-            with open(file_path, "r") as location_file:
-                locations = location_file.read().split("\n")
-            for location in locations:
-                location_json_list.append(location)
-            result = requests.post(url_location + hostname, json=location_json_list)
+            with open("locations.json") as file:
+                location_json = json.load(file)
+            result = requests.post(url_location + hostname, json=location_json)
             if result.status_code == 200:
-                logging.info("locations.txt uploaded")
+                logging.info("locations.json uploaded")
                 os.remove(file_path)
             else:
-                logging.warning(f"locations.txt upload warning: {result.status_code}")
+                logging.warning(f"locations.json upload warning: {result.status_code}")
 
-        elif file_type == "uploaded_files":
-            file_list_json = []
-            with open(file_path, "r") as uploaded_file:
-                uploaded_files = uploaded_file.read().split("\n")
-            for file_json in uploaded_files:
-                file_list_json.append(file_json)
-
-            result = requests.post(url_image + hostname, json=file_list_json)
+        elif file_type == "uploaded_videos":
+            with open("uploaded_videos.json") as file:
+                videos_json = json.load(file)
+            result = requests.post(url_image + hostname, json=videos_json)
 
             if result.status_code == 200:
-                logging.info("uploaded_files.txt uploaded")
+                logging.info("uploaded_videos.json uploaded")
                 os.remove(file_path)
             else:
-                logging.warning(f"uploaded_files.txt upload warning: {result.status_code}")
+                logging.warning(f"uploaded_videos.json upload warning: {result.status_code}")
+
     except Exception:
         exception_type, exception_object, exception_traceback = sys.exc_info()
         error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
@@ -151,10 +155,10 @@ def check_folder():
             files_list = os.listdir(files_folder)
             for file in files_list:
                 logging.info(f"Files in folder: {len(files_list)}")
-                if os.path.isfile(f"{files_folder}/uploaded_files.txt"):
-                    upload_data(file_type="uploaded_files", file_path=f"{files_folder}/uploaded_files.txt")
-                if os.path.isfile(f"{files_folder}/locations.txt"):
-                    upload_data(file_type="locations", file_path=f"{files_folder}/locations.txt")
+                if os.path.isfile(f"{files_folder}/uploaded_videos.json"):
+                    upload_data(file_type="uploaded_videos", file_path=f"{files_folder}/uploaded_videos.json")
+                if os.path.isfile(f"{files_folder}/locations.json"):
+                    upload_data(file_type="locations", file_path=f"{files_folder}/locations.json")
                 if file.endswith(".mp4"):
                     upload_data(file_type="video", file_path=f"{files_folder}/{file}")
     except Exception:
