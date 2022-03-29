@@ -69,9 +69,9 @@ def upload_data(file_type, file_path=None, file_data=None):
                 uploaded_file = result.json()["filename"]
                 logging.info(f"Video File uploaded: {file_name}\tUploaded File: {uploaded_file}")
                 os.remove(file_path)
-                file_date = file_name.split(",,")[0].split("__")
-                file_lat, file_lng, file_id = file_name.strip(".mp4").split(",,")[1].split(",")
-                file_data = {"file_name": uploaded_file, "date": f"{file_date[0]} {file_date[1]}", "lat": file_lat, "lng": file_lng, "id": file_id}
+                file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
+                file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
+                file_data = {"file_name": uploaded_file, "date": f"{file_date}", "lat": file_lat, "lng": file_lng, "id": file_id}
 
                 try:
                     result = requests.post(url_image + hostname, json=file_data)
