@@ -543,13 +543,13 @@ while True:
                 #             logging.info("Killing OpenCV")
                 #             threadKill = True
                 #
-                # else:
-                #     thread_list = []
-                #     for thread in threading.enumerate():
-                #         thread_list.append(thread.name)
-                #     if "opencv" not in thread_list:
-                #         logging.info("Starting OpenCV")
-                #         threading.Thread(target=capture, name="opencv", daemon=True).start()
+                if minDistance < 200:
+                    thread_list = []
+                    for thread in threading.enumerate():
+                        thread_list.append(thread.name)
+                    if "opencv" not in thread_list:
+                        logging.info("Starting OpenCV")
+                        threading.Thread(target=capture, name="opencv", daemon=True).start()
 
             elif parsed_data.status == 'V':
                 logging.warning(f'Invalid GPS info!!: {parsed_data.status}')
