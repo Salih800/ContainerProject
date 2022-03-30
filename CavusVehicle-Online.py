@@ -195,6 +195,7 @@ def stream_to_server():
 
             else:
                 logging.warning(f"Unknown message from server: {server_msg}")
+                time.sleep(30)
 
     except Exception:
         exception_type, exception_object, exception_traceback = sys.exc_info()
