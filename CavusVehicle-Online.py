@@ -122,7 +122,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                 write_json(file_data, "locations.json")
 
         elif file_type == "locations":
-            with open("locations.json") as file:
+            with open(file_path) as file:
                 location_json = json.load(file)
             result = requests.post(url_location + hostname, json=location_json)
             if result.status_code == 200:
@@ -132,7 +132,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                 logging.warning(f"locations.json upload warning: {result.status_code}")
 
         elif file_type == "uploaded_videos":
-            with open("uploaded_videos.json") as file:
+            with open(file_path) as file:
                 videos_json = json.load(file)
             result = requests.post(url_image + hostname, json=videos_json)
 
