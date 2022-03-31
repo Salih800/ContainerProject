@@ -286,7 +286,7 @@ def capture():
                             logging.info(f"Recorded video FileSize={file_size} MB in {video_record_time} seconds and Total {frame_count} frames: {filename}")
 
                         if connection:
-                            threading.Thread(target=upload_data,
+                            threading.Thread(target=upload_data, name="video_upload",
                                              kwargs={"file_type": "video", "file_path": f'{files_folder}/{filename}.{video_type}'},
                                              daemon=True).start()
                     else:
@@ -519,7 +519,7 @@ while True:
                     # location_data = f'{date_local};{location_gps[0]},{location_gps[1]};{round(speed_in_kmh, 3)}'
                     location_data = {"date": date_local.strftime("%Y-%m-%d %H:%M:%S"), "lat": location_gps[0], "lng": location_gps[1], "speed": speed_in_kmh}
                     if connection:
-                        threading.Thread(target=upload_data, kwargs={"file_type": "location", "file_data": location_data}, daemon=True).start()
+                        threading.Thread(target=upload_data, name="location_upload", kwargs={"file_type": "location", "file_data": location_data}, daemon=True).start()
                     else:
                         with open(f"{files_folder}/locations.txt", "a") as locations_file:
                             locations_file.write(f"{location_data}\n")
