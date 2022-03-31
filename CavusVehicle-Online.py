@@ -239,8 +239,9 @@ def capture():
         while True:
             ret, img = cap.read()
             if not ret:
-                logging.error("ret was False")
-                break
+                logging.error(f"ret was {ret}. Restarting the code")
+                subprocess.call(["python", destination])
+                sys.exit("Shutting down")
 
             if stream:
                 try:
