@@ -558,7 +558,7 @@ while True:
                 #             logging.info("Killing OpenCV")
                 #             threadKill = True
                 #
-                if minDistance < 200:
+                if minDistance < 100:
                     thread_list = []
                     for thread in threading.enumerate():
                         thread_list.append(thread.name)
