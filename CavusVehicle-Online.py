@@ -173,7 +173,6 @@ def stream_to_server():
     host = "93.113.96.30"
     port = 8181
     BUFF_SIZE = 65536
-    WIDTH = 640
 
     try:
         logging.info("Trying to connect to Streaming Server")
@@ -188,6 +187,12 @@ def stream_to_server():
             if server_msg == b"$start$":
                 stream = True
                 logging.info("Start stream komutu verildi")
+                thread_list_folder = []
+                for thread_folder in threading.enumerate():
+                    thread_list_folder.append(thread_folder.name)
+                if "opencv" not in thread_list_folder:
+                    logging.info("Starting OpenCV")
+                    threading.Thread(target=capture, name="opencv", daemon=True).start()
 
             elif server_msg == b"$stop$":
                 stream = False
@@ -315,9 +320,9 @@ def internet_on():
             if "check_folder" not in thread_list_folder:
                 logging.info("Checking folder...")
                 threading.Thread(target=check_folder, name="check_folder", daemon=True).start()
-            if "opencv" not in thread_list_folder:
-                logging.info("Starting OpenCV")
-                threading.Thread(target=capture, name="opencv", daemon=True).start()
+            # if "opencv" not in thread_list_folder:
+            #     logging.info("Starting OpenCV")
+            #     threading.Thread(target=capture, name="opencv", daemon=True).start()
             if "stream_to_server" not in thread_list_folder:
                 logging.info("Streaming Thread is starting...")
                 threading.Thread(target=stream_to_server, name="stream_to_server", daemon=True).start()
