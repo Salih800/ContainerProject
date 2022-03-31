@@ -181,7 +181,7 @@ def check_server():
         if "stream_to_server" in thread_list_folder:
             logging.info("Killing stream_thread...")
             server.close()
-            logging.info("stream_thread killed.")
+            # logging.info("stream_thread killed.")
     elif server_msg == b"$k$":
         logging.info(f"Server is Alive.")
 
@@ -235,7 +235,7 @@ def stream_to_server():
                 logging.warning(f"Unknown message from server: {server_msg}")
                 time.sleep(30)
     except ConnectionAbortedError:
-        print("Closed Connection")
+        logging.info("Closed Connection")
         time.sleep(5)
         stream_to_server()
     except Exception:
