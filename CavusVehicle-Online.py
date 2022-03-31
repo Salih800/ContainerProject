@@ -220,12 +220,14 @@ def stream_to_server():
                     threading.Thread(target=capture, name="opencv", daemon=True).start()
             elif server_msg == b"$stop$":
                 stream = False
-                print("Stop stream komutu verildi")
+                logging.info("Stop stream komutu verildi")
             elif server_msg == b"$k$":
+                logging.info("Server is Alive")
                 time.sleep(5)
                 continue
             elif server_msg == b"":
                 logging.info("Server connection closed. Trying to connect server again...")
+                time.sleep(5)
                 stream_to_server()
                 break
             else:
