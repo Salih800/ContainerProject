@@ -368,7 +368,7 @@ connection = False
 check_connection = 0
 
 files_folder = "files"
-detectLocationDistance = 100
+detectLocationDistance = 61
 threadKill = False
 filename = None
 save_picture = False
