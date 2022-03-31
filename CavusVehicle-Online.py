@@ -19,7 +19,7 @@ import serial
 import base64
 import socket
 import imutils
-
+import multiprocessing
 # hello_21-12-2021
 
 logging.basicConfig(
