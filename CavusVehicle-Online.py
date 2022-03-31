@@ -70,6 +70,7 @@ def write_json(json_data, json_file_name='locations.json'):
 
 
 def upload_data(file_type, file_path=None, file_data=None):
+    global uploaded_folder
     try:
         if file_type == "video":
             file_name = os.path.basename(file_path)
@@ -84,7 +85,8 @@ def upload_data(file_type, file_path=None, file_data=None):
             if status_code == 200 and status == "success":
                 uploaded_file = result.json()["filename"]
                 logging.info(f"Video File uploaded: {file_name}\tUploaded File: {uploaded_file}")
-                os.remove(file_path)
+                # os.remove(file_path)
+                shutil.move(file_path, uploaded_folder)
                 file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
                 file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
                 file_data = {"file_name": uploaded_file, "date": f"{file_date}", "lat": file_lat, "lng": file_lng, "id": file_id}
@@ -258,9 +260,10 @@ def capture():
                         f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
             if save_picture:
+                video_file_path = f'{files_folder}/{filename}.{video_type}'
                 if not video_save:
                     video_save = True
-                    out = cv2.VideoWriter(f'{files_folder}/{filename}.{video_type}',
+                    out = cv2.VideoWriter(video_file_path,
                                           cv2.VideoWriter_fourcc(*fourcc), set_fps, (frame_width, frame_height))
                     logging.info(f'Recording Video...')
                     start_of_video_record = time.time()
@@ -277,7 +280,7 @@ def capture():
                     video_save = False
                     out.release()
 
-                    if os.path.isfile(f'{files_folder}/{filename}.{video_type}'):
+                    if os.path.isfile(video_file_path):
                         video_record_time = round(time.time() - start_of_video_record, 2)
                         file_size = round(os.path.getsize(f'{files_folder}/{filename}.{video_type}') / (1024 * 1024), 2)
                         if file_size < (1/1024):
@@ -391,6 +394,7 @@ id_number = None
 stream = False
 server = None
 frame_count = 0
+uploaded_folder = "uploaded_files"
 
 try:
     subprocess.check_call(["ls", "/dev/ttyACM0"])
@@ -405,6 +409,9 @@ try:
     if not os.path.isdir(files_folder):
         logging.info(f"Making {files_folder} folder")
         os.mkdir(files_folder)
+    if not os.path.isdir(uploaded_folder):
+        logging.info(f"Making {uploaded_folder} folder")
+        os.mkdir(uploaded_folder)
 
     logging.info("Getting values from local...")
     values = json.loads(open('values.txt', 'r').read())
