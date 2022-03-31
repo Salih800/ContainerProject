@@ -182,7 +182,7 @@ def stream_to_server():
         server.connect((host, port))
         id_message = bytes("$" + hostname + "$", "utf-8")
         server.sendall(id_message)
-        logging.info("Message sent to the Server")
+        logging.info(f"Message sent to the Server: {id_message}")
 
         while True:
             server_msg = server.recv(BUFF_SIZE)
