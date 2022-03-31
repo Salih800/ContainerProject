@@ -170,8 +170,26 @@ def check_folder():
         logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
 
+def check_server():
+    global server_msg, stream_thread
+    time.sleep(5)
+    if server_msg == b"":
+        logging.warning("There is no response from server! Restarting the connection")
+        thread_list_folder = []
+        for thread_folder in threading.enumerate():
+            thread_list_folder.append(thread_folder.name)
+        if "stream_to_server" in thread_list_folder:
+            logging.info("Killing stream_thread...")
+            stream_thread.kill()
+            stream_thread.join()
+            logging.info("stream_thread killed.")
+    else:
+        logging.info(f"Server is Alive.")
+
+
+
 def stream_to_server():
-    global stream, hostname, server
+    global stream, hostname, server, server_msg
     host = "93.113.96.30"
     port = 8181
     BUFF_SIZE = 65536
@@ -180,11 +198,14 @@ def stream_to_server():
         logging.info("Trying to connect to Streaming Server")
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.connect((host, port))
-        id_message = bytes("$" + hostname + "$", "utf-8")
+        id_message = bytes("$id" + hostname + "$", "utf-8")
         server.sendall(id_message)
         logging.info(f"Message sent to the Server: {id_message}")
 
         while True:
+            server.sendall(b"$k$")
+            server_msg = b""
+            threading.Thread(target=check_server, name="check_server", daemon=True).start()
             server_msg = server.recv(BUFF_SIZE)
             if server_msg == b"$start$":
                 stream = True
@@ -195,11 +216,14 @@ def stream_to_server():
                 if "opencv" not in thread_list_folder:
                     logging.info("Starting OpenCV")
                     threading.Thread(target=capture, name="opencv", daemon=True).start()
-
             elif server_msg == b"$stop$":
                 stream = False
                 print("Stop stream komutu verildi")
-
+            elif server_msg == b"$k$":
+                time.sleep(5)
+                continue
+            elif server_msg == b"":
+                logging.info("Server connection closed. Trying to connect server again...")
             else:
                 logging.warning(f"Unknown message from server: {server_msg}")
                 time.sleep(30)
@@ -320,6 +344,7 @@ def check_running_threads():
 def internet_on():
     global connection
     global url_check
+    global stream_thread
     try:
         check_running_threads()
         requests.get(url_check)
@@ -337,7 +362,8 @@ def internet_on():
             #     threading.Thread(target=capture, name="opencv", daemon=True).start()
             if "stream_to_server" not in thread_list_folder:
                 logging.info("Streaming Thread is starting...")
-                threading.Thread(target=stream_to_server, name="stream_to_server", daemon=True).start()
+                stream_thread = threading.Thread(target=stream_to_server, name="stream_to_server", daemon=True)
+                stream_thread.start()
 
             logging.info("Internet Connected")
 
@@ -395,6 +421,8 @@ stream = False
 server = None
 frame_count = 0
 uploaded_folder = "uploaded_files"
+server_msg = b""
+stream_thread = None
 
 try:
     subprocess.check_call(["ls", "/dev/ttyACM0"])
