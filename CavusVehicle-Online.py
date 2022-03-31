@@ -204,10 +204,10 @@ def stream_to_server():
         while True:
             server.sendall(b"$k$")
             server_msg = b""
-            check_server_thread = threading.Thread(target=check_server, name="check_server", daemon=True)
-            check_server_thread.start()
+            # check_server_thread = threading.Thread(target=check_server, name="check_server", daemon=True)
+            # check_server_thread.start()
             server_msg = server.recv(BUFF_SIZE)
-            check_server_thread.join()
+            # check_server_thread.join()
             if server_msg == b"$start$":
                 stream = True
                 logging.info("Start stream komutu verildi")
