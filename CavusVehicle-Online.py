@@ -521,6 +521,7 @@ while True:
                     if connection:
                         threading.Thread(target=upload_data, name="location_upload", kwargs={"file_type": "location", "file_data": location_data}, daemon=True).start()
                     else:
+                        logging.warning("There is no connection. Saving location to file...")
                         write_json(location_data, "locations.json")
 
                 if save_picture:
