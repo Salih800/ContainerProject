@@ -207,6 +207,7 @@ def stream_to_server():
             server_msg = b""
             check_server_thread = threading.Thread(target=check_server, name="check_server", daemon=True)
             check_server_thread.start()
+            logging.info("Listening server...")
             server_msg = server.recv(BUFF_SIZE)
             check_server_thread.join()
             if server_msg == b"$start$":
