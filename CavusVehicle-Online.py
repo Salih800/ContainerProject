@@ -552,13 +552,13 @@ while True:
                     logging.info(
                         f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds and Minimum distance = {round(minDistance, 2)} meters')
 
-                # if minDistance >= 200:
-                #     for thread in threading.enumerate():
-                #         if thread.name == "opencv":
-                #             logging.info("Killing OpenCV")
-                #             threadKill = True
-                #
-                if minDistance < 100:
+                if minDistance >= 100:
+                    for thread in threading.enumerate():
+                        if thread.name == "opencv":
+                            logging.info("Killing OpenCV")
+                            threadKill = True
+
+                elif minDistance < 100:
                     thread_list = []
                     for thread in threading.enumerate():
                         thread_list.append(thread.name)
