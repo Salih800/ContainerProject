@@ -521,8 +521,7 @@ while True:
                     if connection:
                         threading.Thread(target=upload_data, name="location_upload", kwargs={"file_type": "location", "file_data": location_data}, daemon=True).start()
                     else:
-                        with open(f"{files_folder}/locations.txt", "a") as locations_file:
-                            locations_file.write(f"{location_data}\n")
+                        write_json(location_data, "locations.json")
 
                 if save_picture:
                     distance = geopy.distance.distance(location_gps, garbageLocation[:2]).meters
