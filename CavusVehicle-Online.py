@@ -481,6 +481,7 @@ while True:
                     continue
                 except ValueError as verr:
                     logging.warning(f"{verr}")
+                    time.sleep(5)
                     break
 
         if data_type == "RMC":
