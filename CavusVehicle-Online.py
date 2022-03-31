@@ -227,6 +227,7 @@ def stream_to_server():
                 continue
             elif server_msg == b"":
                 logging.info("Server connection closed. Trying to connect server again...")
+                break
             else:
                 logging.warning(f"Unknown message from server: {server_msg}")
                 time.sleep(30)
