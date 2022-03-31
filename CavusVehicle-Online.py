@@ -170,20 +170,20 @@ def check_folder():
         logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
 
-def check_server():
-    global server_msg, stream_thread
-    time.sleep(20)
-    if server_msg == b"":
-        logging.warning("There is no response from server! Restarting the connection")
-        thread_list_folder = []
-        for thread_folder in threading.enumerate():
-            thread_list_folder.append(thread_folder.name)
-        if "stream_to_server" in thread_list_folder:
-            logging.info("Killing stream_thread...")
-            stream_thread.join()
-            logging.info("stream_thread killed.")
-    else:
-        logging.info(f"Server is Alive.")
+# def check_server():
+#     global server_msg, stream_thread
+#     time.sleep(20)
+#     if server_msg == b"":
+#         logging.warning("There is no response from server! Restarting the connection")
+#         thread_list_folder = []
+#         for thread_folder in threading.enumerate():
+#             thread_list_folder.append(thread_folder.name)
+#         if "stream_to_server" in thread_list_folder:
+#             logging.info("Killing stream_thread...")
+#             stream_thread.join()
+#             logging.info("stream_thread killed.")
+#     else:
+#         logging.info(f"Server is Alive.")
 
 
 
@@ -200,10 +200,11 @@ def stream_to_server():
         id_message = bytes("$id" + hostname + "$", "utf-8")
         server.sendall(id_message)
         logging.info(f"Message sent to the Server: {id_message}")
+        alive_msg = b"$k$"
 
         while True:
-            server.sendall(b"$k$")
-            server_msg = b""
+            server.sendall(alive_msg)
+            # server_msg = b""
             # check_server_thread = threading.Thread(target=check_server, name="check_server", daemon=True)
             # check_server_thread.start()
             server_msg = server.recv(BUFF_SIZE)
