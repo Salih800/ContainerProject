@@ -180,7 +180,6 @@ def check_server():
             thread_list_folder.append(thread_folder.name)
         if "stream_to_server" in thread_list_folder:
             logging.info("Killing stream_thread...")
-            stream_thread.kill()
             stream_thread.join()
             logging.info("stream_thread killed.")
     else:
@@ -208,7 +207,6 @@ def stream_to_server():
             check_server_thread = threading.Thread(target=check_server, name="check_server", daemon=True)
             check_server_thread.start()
             server_msg = server.recv(BUFF_SIZE)
-            check_server_thread.kill()
             check_server_thread.join()
             if server_msg == b"$start$":
                 stream = True
