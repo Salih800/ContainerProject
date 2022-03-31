@@ -172,7 +172,7 @@ def check_folder():
 
 def check_server():
     global server_msg, stream_thread, server
-    time.sleep(5)
+    time.sleep(10)
     if server_msg == b"":
         logging.warning("There is no response from server! Restarting the connection")
         thread_list_folder = []
