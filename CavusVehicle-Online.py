@@ -306,10 +306,18 @@ def capture():
             f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
 
+def check_running_threads():
+    thread_list_folder = []
+    for thread_folder in threading.enumerate():
+        thread_list_folder.append(thread_folder.name)
+    logging.info(f"Running Threads: {thread_list_folder}")
+
+
 def internet_on():
     global connection
     global url_check
     try:
+        check_running_threads()
         requests.get(url_check)
         if not connection:
             connection = True
