@@ -425,7 +425,7 @@ while True:
         if time.time() - check_connection > 10:
             check_connection = time.time()
             logging.info("Checking Connection...")
-            threading.Thread(target=internet_on, daemon=True).start()
+            threading.Thread(target=internet_on, name="internet_on", daemon=True).start()
 
         if time.time() - pTimeConnection > 3600:
             pTimeConnection = time.time()
