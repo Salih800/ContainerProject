@@ -172,15 +172,19 @@ def check_folder():
 
 def check_server():
     global server_msg, stream_thread, server
-    time.sleep(10)
+    time.sleep(1)
+    alive_msg = b"$k$"
+    while server_msg == b"":
+        server.sendall(alive_msg)
+        time.sleep(2)
     if server_msg == b"":
         logging.warning("There is no response from server! Restarting the connection")
-        thread_list_folder = []
-        for thread_folder in threading.enumerate():
-            thread_list_folder.append(thread_folder.name)
-        if "stream_to_server" in thread_list_folder:
-            logging.info("Killing stream_thread...")
-            server.close()
+        # thread_list_folder = []
+        # for thread_folder in threading.enumerate():
+        #     thread_list_folder.append(thread_folder.name)
+        # if "stream_to_server" in thread_list_folder:
+        logging.info("Killing stream_thread...")
+        server.close()
             # logging.info("stream_thread killed.")
     elif server_msg == b"$k$":
         logging.info(f"Server is Alive.")
