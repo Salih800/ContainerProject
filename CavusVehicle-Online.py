@@ -174,7 +174,11 @@ def check_server():
     global server_msg, stream_thread, server
     time.sleep(1)
     alive_msg = b"$k$"
+    listen_time = 0
     while server_msg == b"":
+        if time.time() - listen_time > 10:
+            listen_time = time.time()
+            logging.info("Listening Server")
         server.sendall(alive_msg)
         time.sleep(2)
     if server_msg == b"":
