@@ -19,7 +19,6 @@ import serial
 import base64
 import socket
 import imutils
-import multiprocessing
 # hello_21-12-2021
 
 logging.basicConfig(
@@ -170,32 +169,59 @@ def check_folder():
         logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
 
 
-def check_server():
-    global server_msg, stream_thread, server
-    time.sleep(1)
-    alive_msg = b"$k$"
-    listen_time = 0
-    while server_msg == b"":
-        if time.time() - listen_time > 10:
-            listen_time = time.time()
-            logging.info("Listening Server")
-        server.sendall(alive_msg)
-        time.sleep(2)
-    if server_msg == b"":
-        logging.warning("There is no response from server! Restarting the connection")
-        # thread_list_folder = []
-        # for thread_folder in threading.enumerate():
-        #     thread_list_folder.append(thread_folder.name)
-        # if "stream_to_server" in thread_list_folder:
-        logging.info("Killing stream_thread...")
-        server.close()
-            # logging.info("stream_thread killed.")
-    elif server_msg == b"$k$":
-        logging.info(f"Server is Alive.")
+def check_server_msg():
+    global server_msg, server, stream
+    listen_time = time.time()
+    while True:
+        if server_msg == b"l":
+            if time.time() - listen_time > 20:
+                logging.warning("There is no response from Server! Retrying the connection...")
+                server.close()
+                # time.sleep(5)
+                break
+                # start_listen_thread()
+            time.sleep(0.1)
+            continue
+        if server_msg == b"$start$":
+            stream = True
+            logging.info("Starting to Stream")
+            thread_list_folder = []
+            for thread_folder in threading.enumerate():
+                thread_list_folder.append(thread_folder.name)
+            if "opencv" not in thread_list_folder:
+                logging.info("Starting OpenCV")
+                threading.Thread(target=capture, name="opencv", daemon=True).start()
+            time.sleep(1)
+            break
+
+        elif server_msg == b"$stop$":
+            stream = False
+            logging.info("Stopping the stream.")
+            time.sleep(1)
+            break
+
+        elif server_msg == b"$k$":
+            logging.info("Server is Alive")
+            break
+
+        elif server_msg == b"":
+            logging.info("Received empty byte! Closing the connection...")
+            server.close()
+            # time.sleep(5)
+            # start_listen_thread()
+            break
+
+        else:
+            logging.warning(f"Unknown message from server: {server_msg}")
+            time.sleep(5)
+            continue
 
 
+# def start_listen_thread():
+#     threading.Thread(target=listen_to_server, name="listen_to_server", daemon=True).start()
 
-def stream_to_server():
+
+def listen_to_server():
     global stream, hostname, server, server_msg
     host = "93.113.96.30"
     port = 8181
@@ -207,45 +233,23 @@ def stream_to_server():
         server.connect((host, port))
         id_message = bytes("$id" + hostname + "$", "utf-8")
         server.sendall(id_message)
-        logging.info(f"Message sent to the Server: {id_message}")
+        logging.info(f"Id message sent to the Server: {id_message}")
         alive_msg = b"$k$"
 
         while True:
             server.sendall(alive_msg)
-            server_msg = b""
-            check_server_thread = threading.Thread(target=check_server, name="check_server", daemon=True)
+            server_msg = b"l"
+            check_server_thread = threading.Thread(target=check_server_msg, name="check_server_msg", daemon=True)
             check_server_thread.start()
             logging.info("Listening server...")
             server_msg = server.recv(BUFF_SIZE)
+            time.sleep(20)
             check_server_thread.join()
-            if server_msg == b"$start$":
-                stream = True
-                logging.info("Start stream komutu verildi")
-                thread_list_folder = []
-                for thread_folder in threading.enumerate():
-                    thread_list_folder.append(thread_folder.name)
-                if "opencv" not in thread_list_folder:
-                    logging.info("Starting OpenCV")
-                    threading.Thread(target=capture, name="opencv", daemon=True).start()
-            elif server_msg == b"$stop$":
-                stream = False
-                logging.info("Stop stream komutu verildi")
-            elif server_msg == b"$k$":
-                logging.info("Server is Alive")
-                time.sleep(5)
-                continue
-            elif server_msg == b"":
-                logging.info("Server connection closed. Trying to connect server again...")
-                time.sleep(5)
-                stream_to_server()
-                break
-            else:
-                logging.warning(f"Unknown message from server: {server_msg}")
-                time.sleep(30)
+
     except ConnectionAbortedError:
         logging.info("Closed Connection")
         time.sleep(5)
-        stream_to_server()
+        listen_to_server()
     except Exception:
         exception_type, exception_object, exception_traceback = sys.exc_info()
         error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
@@ -253,7 +257,7 @@ def stream_to_server():
         logging.error(
             f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
         time.sleep(5)
-        stream_to_server()
+        listen_to_server()
 
 def capture():
     try:
@@ -324,19 +328,19 @@ def capture():
 
                     if os.path.isfile(video_file_path):
                         video_record_time = round(time.time() - start_of_video_record, 2)
-                        file_size = round(os.path.getsize(f'{files_folder}/{filename}.{video_type}') / (1024 * 1024), 2)
+                        file_size = round(os.path.getsize(video_file_path) / (1024 * 1024), 2)
                         if file_size < (1/1024):
                             logging.warning(f"Recorded file size is too small! File size: {file_size} MB")
-                            os.remove(f'{picture_folder}{filename}.{video_type}')
+                            os.remove(video_file_path)
                         else:
                             logging.info(f"Recorded video FileSize={file_size} MB in {video_record_time} seconds and Total {frame_count} frames: {filename}")
 
                         if connection:
                             threading.Thread(target=upload_data, name="video_upload",
-                                             kwargs={"file_type": "video", "file_path": f'{files_folder}/{filename}.{video_type}'},
+                                             kwargs={"file_type": "video", "file_path": video_file_path},
                                              daemon=True).start()
                     else:
-                        logging.warning(f"Opencv couldn't find the file: {filename}")
+                        logging.warning(f"Opencv couldn't find the file: {video_file_path}")
 
             if threadKill:
                 threadKill = False
@@ -378,9 +382,9 @@ def internet_on():
             # if "opencv" not in thread_list_folder:
             #     logging.info("Starting OpenCV")
             #     threading.Thread(target=capture, name="opencv", daemon=True).start()
-            if "stream_to_server" not in thread_list_folder:
+            if "listen_to_server" not in thread_list_folder:
                 logging.info("Streaming Thread is starting...")
-                stream_thread = threading.Thread(target=stream_to_server, name="stream_to_server", daemon=True)
+                stream_thread = threading.Thread(target=listen_to_server, name="listen_to_server", daemon=True)
                 stream_thread.start()
 
             logging.info("Internet Connected")
