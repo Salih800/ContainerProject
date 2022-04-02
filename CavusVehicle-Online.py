@@ -222,7 +222,7 @@ def check_server_msg():
 
 
 def listen_to_server():
-    global stream, hostname, server, server_msg
+    global stream, hostname, server, server_msg, connection
     host = "93.113.96.30"
     port = 8181
     BUFF_SIZE = 65536
@@ -249,7 +249,8 @@ def listen_to_server():
     except ConnectionAbortedError:
         logging.info("Closed Connection")
         time.sleep(5)
-        listen_to_server()
+        if connection:
+            listen_to_server()
     except Exception:
         exception_type, exception_object, exception_traceback = sys.exc_info()
         error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
@@ -257,7 +258,8 @@ def listen_to_server():
         logging.error(
             f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
         time.sleep(5)
-        listen_to_server()
+        if connection:
+            listen_to_server()
 
 def capture():
     try:
