@@ -222,7 +222,7 @@ def check_server_msg():
 
 
 def listen_to_server():
-    global stream, hostname, server, server_msg, connection
+    global hostname, server, server_msg, connection
     host = "93.113.96.30"
     port = 8181
     BUFF_SIZE = 65536
@@ -282,6 +282,7 @@ def capture():
         global picture_folder
         global threadKill
         global frame_count
+        global stream
 
         video_save = False
         streaming_width = 640
@@ -300,6 +301,11 @@ def capture():
                     bosluk = b"$"
                     message = bosluk + base64.b64encode(buffer) + bosluk
                     server.sendall(message)
+                except BrokenPipeError:
+                    stream = False
+                    logging.error("BrokenPipeError! Stream stopping...")
+                    time.sleep(5)
+                    break
                 except Exception:
                     exception_type, exception_object, exception_traceback = sys.exc_info()
                     error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
