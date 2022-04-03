@@ -220,6 +220,63 @@ def check_folder():
 # def start_listen_thread():
 #     threading.Thread(target=listen_to_server, name="listen_to_server", daemon=True).start()
 
+def read_messages_from_server():
+    global stream, server, server_msg
+    alive_msg = b"$k$"
+    server_listen_time = time.time()
+    try:
+        while True:
+            if server_msg == "wait":
+                if time.time() - server_listen_time < 30:
+                    time.sleep(1)
+                    continue
+                logging.warning("There is no response from Server in 30 seconds. Closing the connection...")
+                server.close()
+                break
+
+            elif server_msg != b"":
+                server_listen_time = time.time()
+                data_orig = server_msg.decode("utf-8")
+                server_msg = "wait"
+                merge_msg = False
+                messages = []
+                new_msg = ""
+                for d in data_orig:
+                    if d == "$":
+                        if not merge_msg:
+                            merge_msg = True
+                            continue
+                        else:
+                            merge_msg = False
+                            messages.append(new_msg)
+                            new_msg = ""
+                    if merge_msg:
+                        new_msg += d
+
+                for command in messages:
+                    if command == "start":
+                        stream = True
+                        logging.info("Stream started.")
+                    elif command == "stop":
+                        stream = False
+                        logging.info("Stream stopped.")
+                    elif command == "k":
+                        server.sendall(alive_msg)
+                        logging.info("Server is Online.")
+                    else:
+                        logging.warning(f"Unknown message from server: {command}")
+                        time.sleep(5)
+            else:
+                logging.error(f"Empty byte from Server. Closing the connection!: Server Message: {server_msg}")
+                server.close()
+                break
+    except Exception:
+        exception_type, exception_object, exception_traceback = sys.exc_info()
+        error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
+        line_number = exception_traceback.tb_lineno
+        logging.error(
+            f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
+
 
 def listen_to_server():
     global hostname, server, server_msg, connection, stream
@@ -235,56 +292,61 @@ def listen_to_server():
         id_message = bytes("$id" + hostname + "$", "utf-8")
         server.sendall(id_message)
         logging.info(f"Id message sent to the Server: {id_message}")
-        alive_msg = b"$k$"
+        server_msg = "wait"
+
+        threading.Thread(target=read_messages_from_server, name="read_messages_from_server", daemon=True).start()
 
         while True:
-            server.sendall(alive_msg)
+            # server.sendall(alive_msg)
             # check_server_thread = threading.Thread(target=check_server_msg, name="check_server_msg", daemon=True)
             # check_server_thread.start()
             logging.info("Listening server...")
             server_msg = server.recv(BUFF_SIZE)
-            if server_msg != b"":
-                data_orig = server_msg.decode("utf-8")
-                accept = False
-                messages = []
-                new_msg = ""
-                for d in data_orig:
-                    if d == "$":
-                        if not accept:
-                            accept = True
-                            continue
-                        else:
-                            accept = False
-                            messages.append(new_msg)
-                            new_msg = ""
-                    if accept:
-                        new_msg += d
-
-                for command in messages:
-                    if command == "start":
-                        stream = True
-                        logging.info("Stream started.")
-                    elif command == "stop":
-                        stream = False
-                        logging.info("Stream stopped.")
-                    elif command == "k":
-                        logging.info("Server is Online.")
-                    else:
-                        logging.warning(f"Unknown message from server: {command}")
-                        time.sleep(1)
-            else:
-                logging.error(f"Empty byte from Server. Closing the connection!: Message: {server_msg}")
-                time.sleep(10)
-                break
-            time.sleep(20)
+            # if server_msg != b"":
+            #     data_orig = server_msg.decode("utf-8")
+            #     accept = False
+            #     messages = []
+            #     new_msg = ""
+            #     for d in data_orig:
+            #         if d == "$":
+            #             if not accept:
+            #                 accept = True
+            #                 continue
+            #             else:
+            #                 accept = False
+            #                 messages.append(new_msg)
+            #                 new_msg = ""
+            #         if accept:
+            #             new_msg += d
+            #
+            #     for command in messages:
+            #         if command == "start":
+            #             stream = True
+            #             logging.info("Stream started.")
+            #         elif command == "stop":
+            #             stream = False
+            #             logging.info("Stream stopped.")
+            #         elif command == "k":
+            #             logging.info("Server is Online.")
+            #         else:
+            #             logging.warning(f"Unknown message from server: {command}")
+            #             time.sleep(1)
+            # else:
+            #     logging.error(f"Empty byte from Server. Closing the connection!: Server Message: {server_msg}")
+            #     time.sleep(10)
+            #     break
+            # time.sleep(20)
             # check_server_thread.join()
-
-    except ConnectionAbortedError:
-        logging.info("Closed Connection")
+    except ConnectionRefusedError as cre:
+        print("Connection Refused! Probably server is not online..: ", cre)
         stream = False
         time.sleep(5)
-    except ConnectionResetError:
-        print("Connection closed by server. Retrying to connect in 5 seconds...")
+    except ConnectionAbortedError as cae:
+        logging.info("Connection closed by Client!: ", cae)
+        stream = False
+        time.sleep(5)
+    except ConnectionResetError as cse:
+        print("Connection closed by server!: ", cse)
         stream = False
         time.sleep(5)
     except Exception:
@@ -294,8 +356,7 @@ def listen_to_server():
         logging.error(
             f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
         time.sleep(5)
-        if connection:
-            listen_to_server()
+
 
 def capture():
     try:
@@ -416,7 +477,7 @@ def check_running_threads():
 def internet_on():
     global connection
     global url_check
-    global stream_thread
+    # global stream_thread
     try:
         check_running_threads()
         requests.get(url_check)
@@ -434,15 +495,16 @@ def internet_on():
             #     threading.Thread(target=capture, name="opencv", daemon=True).start()
             if "listen_to_server" not in thread_list_folder:
                 logging.info("Streaming Thread is starting...")
-                stream_thread = threading.Thread(target=listen_to_server, name="listen_to_server", daemon=True)
-                stream_thread.start()
+                threading.Thread(target=listen_to_server, name="listen_to_server", daemon=True).start()
+                # stream_thread = threading.Thread(target=listen_to_server, name="listen_to_server", daemon=True)
+                # stream_thread.start()
 
             logging.info("Internet Connected")
 
     except requests.exceptions.ConnectionError:
         if connection:
             connection = False
-            logging.info("Connection Closed!")
+            logging.info("There is no Internet!")
 
     except Exception:
         if connection:
@@ -490,11 +552,11 @@ save_picture = False
 hostname = "empty"
 id_number = None
 stream = False
-server = None
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 frame_count = 0
 uploaded_folder = "uploaded_files"
-server_msg = b""
-stream_thread = None
+server_msg = "wait"
+# stream_thread = None
 
 try:
     subprocess.check_call(["ls", "/dev/ttyACM0"])
