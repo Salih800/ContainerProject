@@ -625,7 +625,8 @@ while True:
                         logging.info("New update found! Changing the code...")
                         shutil.move(downloaded, destination)
                         logging.info("Code change completed. Restarting...")
-                        subprocess.call(["python", destination])
+                        # subprocess.call(["python", destination])
+                        subprocess.call(["sudo", "reboot"])
                         sys.exit("Shutting down")
                     else:
                         logging.info("No update found!")
