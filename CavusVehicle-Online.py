@@ -221,7 +221,7 @@ def check_folder():
 #     threading.Thread(target=listen_to_server, name="listen_to_server", daemon=True).start()
 
 def read_messages_from_server():
-    global stream, server, server_msg
+    global stream, server, server_msg, threadKill
     alive_msg = b"$k$"
     server_listen_time = time.time()
     try:
@@ -266,6 +266,7 @@ def read_messages_from_server():
 
                     elif command == "stop":
                         stream = False
+                        threadKill = True
                         logging.info("Stream stopped.")
                     elif command == "k":
                         server.sendall(alive_msg)
@@ -469,6 +470,7 @@ def capture():
 
             if threadKill:
                 threadKill = False
+                cap.release()
                 break
 
             cv2.waitKey(1)
