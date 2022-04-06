@@ -289,7 +289,7 @@ def listen_to_server():
     global hostname, server, server_msg, connection, stream
     host = "93.113.96.30"
     port = 8181
-    BUFF_SIZE = 65536
+    BUFF_SIZE = 127
 
     try:
         logging.info("Trying to connect to Streaming Server")
