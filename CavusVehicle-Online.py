@@ -257,6 +257,13 @@ def read_messages_from_server():
                     if command == "start":
                         stream = True
                         logging.info("Stream started.")
+                        thread_list_folder = []
+                        for thread_folder in threading.enumerate():
+                            thread_list_folder.append(thread_folder.name)
+                        if "opencv" not in thread_list_folder:
+                            logging.info("Starting OpenCV")
+                            threading.Thread(target=capture, name="opencv", daemon=True).start()
+
                     elif command == "stop":
                         stream = False
                         logging.info("Stream stopped.")
