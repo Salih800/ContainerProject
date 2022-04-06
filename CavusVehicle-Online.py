@@ -292,6 +292,7 @@ def listen_to_server():
     BUFF_SIZE = 127
 
     try:
+        stream = False
         logging.info("Trying to connect to Streaming Server")
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_address = (host, port)
@@ -300,7 +301,6 @@ def listen_to_server():
         server.sendall(id_message)
         logging.info(f"Id message sent to the Server: {id_message}")
         server_msg = "wait"
-
         thread_list_folder = []
         for thread_folder in threading.enumerate():
             thread_list_folder.append(thread_folder.name)
