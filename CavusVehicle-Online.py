@@ -228,7 +228,7 @@ def read_messages_from_server():
         while True:
             if server_msg == "wait":
                 if time.time() - server_listen_time < 30:
-                    time.sleep(1)
+                    time.sleep(0.1)
                     continue
                 logging.warning("There is no response from Server in 30 seconds. Closing the connection...")
                 server.close()
@@ -294,7 +294,11 @@ def listen_to_server():
         logging.info(f"Id message sent to the Server: {id_message}")
         server_msg = "wait"
 
-        threading.Thread(target=read_messages_from_server, name="read_messages_from_server", daemon=True).start()
+        thread_list_folder = []
+        for thread_folder in threading.enumerate():
+            thread_list_folder.append(thread_folder.name)
+        if "read_messages_from_server" not in thread_list_folder:
+            threading.Thread(target=read_messages_from_server, name="read_messages_from_server", daemon=True).start()
 
         while True:
             # server.sendall(alive_msg)
