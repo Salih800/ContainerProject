@@ -426,6 +426,9 @@ def capture():
                     line_number = exception_traceback.tb_lineno
                     logging.error(
                         f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
+                except OSError as err:
+                    logging.warning(f"{err}")
+                    stream = False
 
             if save_picture:
                 video_file_path = f'{files_folder}/{filename}.{video_type}'
