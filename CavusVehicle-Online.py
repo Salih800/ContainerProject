@@ -438,8 +438,8 @@ def capture():
                     stream = False
 
             if save_picture:
-                video_file_path = f'{files_folder}/{filename}.{video_type}'
                 if not video_save:
+                    video_file_path = f'{files_folder}/{filename}.{video_type}'
                     video_save = True
                     out = cv2.VideoWriter(video_file_path,
                                           cv2.VideoWriter_fourcc(*fourcc), set_fps, (frame_width, frame_height))
