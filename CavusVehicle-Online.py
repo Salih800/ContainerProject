@@ -701,7 +701,9 @@ while True:
                 except pynmea2.nmea.ParseError as parse_error:
                     parse_error_count = parse_error_count + 1
                     if parse_error_count >= 10:
-                        logging.warning(f"Parse Error happened {parse_error_count} times: {parse_error}")
+                        logging.warning(f"Parse Error happened {parse_error_count} times!")
+                        time.sleep(1)
+                        break
                     continue
                 except ValueError as verr:
                     logging.warning(f"{verr}")
