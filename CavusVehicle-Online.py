@@ -406,6 +406,13 @@ def capture():
         video_save = False
         streaming_width = 640
 
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        date_org = (int(frame_width - 2 * frame_width / 10), int(frame_height - 9 * frame_height / 10))
+        time_org = (int(frame_width - 1.85 * frame_width / 10), int(frame_height - 8.5 * frame_height / 10))
+        fontScale = 0.5
+        color = (255, 255, 255)
+        thickness = 1
+
         while True:
             ret, img = cap.read()
             if not ret:
@@ -415,7 +422,16 @@ def capture():
 
             if stream:
                 try:
+                    date = datetime.datetime.now().strftime("%Y/%m/%d")
+                    time_now = datetime.datetime.now().strftime("%H:%M:%S")
+
                     frame = imutils.resize(img, width=streaming_width)
+
+                    frame = cv2.putText(frame, str(date), date_org, font,
+                                        fontScale, color, thickness, cv2.LINE_AA)
+                    frame = cv2.putText(frame, str(time_now), time_org, font,
+                                        fontScale, color, thickness, cv2.LINE_AA)
+
                     encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
                     bosluk = b"$"
                     message = bosluk + base64.b64encode(buffer) + bosluk
