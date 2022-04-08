@@ -351,7 +351,7 @@ def listen_to_server():
                 server.close()
                 break
 
-    except TimeoutError:
+    except socket.timeout:
         logging.warning("Server timeout in 30 seconds! Closing the connection.")
         stream = False
         time.sleep(5)
@@ -373,6 +373,7 @@ def listen_to_server():
         line_number = exception_traceback.tb_lineno
         logging.error(
             f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
+        stream = False
         time.sleep(5)
 
 
