@@ -410,7 +410,7 @@ def capture():
         date_org = (int(frame_width - 2 * frame_width / 10), int(frame_height - 9 * frame_height / 10))
         time_org = (int(frame_width - 1.85 * frame_width / 10), int(frame_height - 8.5 * frame_height / 10))
         fontScale = 0.5
-        color = (255, 255, 255)
+        color = (255, 0, 0)
         thickness = 1
 
         while True:
