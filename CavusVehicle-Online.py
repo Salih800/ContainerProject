@@ -299,7 +299,7 @@ def listen_to_server():
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_address = (host, port)
         server.connect(server_address)
-        server.settimeout(30)
+        server.settimeout(60)
         id_message = bytes("$id" + hostname + "$", "utf-8")
         server.sendall(id_message)
         logging.info(f"Id message sent to the Server: {id_message}")
@@ -352,7 +352,7 @@ def listen_to_server():
                 break
 
     except socket.timeout:
-        logging.warning("Server timeout in 30 seconds! Closing the connection.")
+        logging.warning("Server timeout in 60 seconds! Closing the connection.")
         stream = False
         time.sleep(5)
     except ConnectionRefusedError as cre:
