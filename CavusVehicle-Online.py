@@ -381,6 +381,9 @@ def capture():
         logging.info("Trying to open camera")
         oldTime = time.time()
         cap = cv2.VideoCapture(0)
+        recorded_files = "recorded"
+        if not os.path.isdir(recorded_files):
+            os.mkdir(recorded_files)
 
         frame_width, frame_height = (640, 480)
         set_fps = 24
@@ -439,7 +442,7 @@ def capture():
 
             if save_picture:
                 if not video_save:
-                    video_file_path = f'{files_folder}/{filename}.{video_type}'
+                    video_file_path = f'{recorded_files}/{filename}.{video_type}'
                     video_save = True
                     out = cv2.VideoWriter(video_file_path,
                                           cv2.VideoWriter_fourcc(*fourcc), set_fps, (frame_width, frame_height))
@@ -466,11 +469,9 @@ def capture():
                             os.remove(video_file_path)
                         else:
                             logging.info(f"Recorded video FileSize={file_size} MB in {video_record_time} seconds and Total {frame_count} frames: {filename}")
+                            shutil.move(video_file_path, files_folder)
 
-                        if connection:
-                            threading.Thread(target=upload_data, name="video_upload",
-                                             kwargs={"file_type": "video", "file_path": video_file_path},
-                                             daemon=True).start()
+
                     else:
                         logging.warning(f"Opencv couldn't find the file: {video_file_path}")
 
