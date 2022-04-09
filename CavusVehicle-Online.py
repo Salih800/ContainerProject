@@ -337,7 +337,7 @@ def listen_to_server():
 
                     elif command == "stop":
                         stream = False
-                        threadKill = True
+                        # threadKill = True
                         logging.info("Stream stopped.")
                     elif command == "k":
                         if not stream:
