@@ -488,7 +488,6 @@ def capture():
                             logging.info(f"Recorded video FileSize={file_size} MB in {video_record_time} seconds and Total {frame_count} frames: {filename}")
                             shutil.move(video_file_path, files_folder)
 
-
                     else:
                         logging.warning(f"Opencv couldn't find the file: {video_file_path}")
 
