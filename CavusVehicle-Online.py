@@ -495,6 +495,7 @@ def capture():
             if threadKill:
                 threadKill = False
                 cap.release()
+                logging.info("Camera closed.")
                 break
 
             cv2.waitKey(1)
