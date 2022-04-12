@@ -573,6 +573,7 @@ while True:
                 logging.info(f'Datetime of GPS: {date_gps} {time_gps} and Speed: {round(speed_in_kmh, 2)} km/s')
 
                 if time.time() - checkCurrentTime > 600:
+                    checkCurrentTime = time.time()
                     if abs(datetime.datetime.now() - date_local) > datetime.timedelta(seconds=3):
                         subprocess.call(['sudo', 'date', '-s', date_local.strftime('%Y/%m/%d %H:%M:%S')])
                         logging.info("System Date Updated.")
