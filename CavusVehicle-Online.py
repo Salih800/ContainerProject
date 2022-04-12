@@ -279,11 +279,12 @@ def capture():
         streaming_width = 640
 
         font = cv2.FONT_HERSHEY_SIMPLEX
-        date_org = (int(frame_width - 2 * frame_width / 10), int(frame_height - 9 * frame_height / 10))
-        time_org = (int(frame_width - 1.85 * frame_width / 10), int(frame_height - 8.5 * frame_height / 10))
-        fontScale = 0.5
+        font_scale = 0.7
+        thickness = 2
         color = (255, 0, 0)
-        thickness = 1
+
+        date_org = (streaming_width - 150, 20)
+        time_org = (streaming_width - 130, 45)
 
         while True:
             ret, img = cap.read()
@@ -300,9 +301,9 @@ def capture():
                     frame = imutils.resize(img, width=streaming_width)
 
                     frame = cv2.putText(frame, str(date), date_org, font,
-                                        fontScale, color, thickness, cv2.LINE_AA)
+                                        font_scale, color, thickness, cv2.LINE_AA)
                     frame = cv2.putText(frame, str(time_now), time_org, font,
-                                        fontScale, color, thickness, cv2.LINE_AA)
+                                        font_scale, color, thickness, cv2.LINE_AA)
 
                     encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
                     bosluk = b"$"
