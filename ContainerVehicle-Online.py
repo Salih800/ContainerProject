@@ -1,24 +1,30 @@
-import hashlib
-import logging
-import datetime
-import json
-import os
-import shutil
-import threading
-import sys
+try:
+    import hashlib
+    import logging
+    import datetime
+    import json
+    import os
+    import shutil
+    import threading
+    import sys
 
-import cv2
-import subprocess
-import time
+    import cv2
+    import time
 
-import geopy.distance
-import pynmea2
-import requests
-import serial
+    import geopy.distance
+    import pynmea2
+    import requests
+    import serial
 
-import base64
-import socket
-import imutils
+    import base64
+    import socket
+    import imutils
+    import subprocess
+except ModuleNotFoundError as module:
+    print("Module not found: ", module.name, "\tTrying to install it...")
+    import subprocess
+    subprocess.check_call(["pip", "install", module.name])
+    subprocess.call(["sudo", "reboot"])
 # hello_21-12-2021
 
 logging.basicConfig(
@@ -503,7 +509,17 @@ while True:
     if connection:
         try:
             if time.time() - pTimeCheck > 7200:
-                pTimeCheck = time.time()
+                pTimeCheck = time.time() - 7020
+
+                log_size = os.path.getsize("project.log") / (1024 * 1024)
+                if log_size > 1:
+                    log_date = datetime.datetime.now().strftime("%Y-%m-%d")
+                    log_time = datetime.datetime.now().strftime("%H-%M-%S")
+                    log_file_name = f"{log_date}_{log_time}.log"
+                    subprocess.check_call(["rclone", "move", "project.log", f"gdrive:Python/ContainerFiles/{log_date}/{hostname}/logs/{log_file_name}"])
+                    logging.info("'project.log' uploaded to gdrive.")
+                    with open('project.log', 'r+') as file:
+                        file.truncate()
 
                 r = requests.get(url_of_project)
                 if r.status_code == 200:
@@ -530,6 +546,7 @@ while True:
 
                 logging.info("Values saved to Local. Connected to the Internet.")
                 logging.info(f'Count of Garbage Locations: {len(garbageLocations)}')
+                pTimeCheck = time.time()
 
         except:
             error_handling()
