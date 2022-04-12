@@ -453,7 +453,7 @@ connection = False
 check_connection = 0
 
 files_folder = "files"
-detectLocationDistance = 61
+detectLocationDistance = 40
 threadKill = False
 filename = None
 save_picture = False
