@@ -21,7 +21,7 @@ try:
     import imutils
     import subprocess
 except ModuleNotFoundError as module:
-    print("Module not found: ", module.name, "\tTrying to install it...")
+    print("Module not found: ", module.name, "\tTrying to install ", module.name)
     import subprocess
     subprocess.check_call(["pip", "install", module.name])
     subprocess.call(["sudo", "reboot"])
@@ -515,9 +515,9 @@ while True:
                 if log_size > 1:
                     log_date = datetime.datetime.now().strftime("%Y-%m-%d")
                     log_time = datetime.datetime.now().strftime("%H-%M-%S")
-                    log_file_name = f"{log_date}_{log_time}.log"
+                    log_file_name = f"{log_date}_{log_time}_{hostname}.log"
                     shutil.copy("project.log", log_file_name)
-                    subprocess.check_call(["rclone", "copy", log_file_name, f"gdrive:Python/ContainerFiles/{log_date}/{hostname}/logs/"])
+                    subprocess.check_call(["rclone", "move", log_file_name, f"gdrive:Python/ContainerFiles/{log_date}/{hostname}/logs/"])
                     logging.info("'project.log' uploaded to gdrive.")
                     with open('project.log', 'r+') as file:
                         file.truncate()
