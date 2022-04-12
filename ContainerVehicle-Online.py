@@ -424,7 +424,7 @@ logging.info("System started")
 time.sleep(3)
 
 downloaded = "downloaded_file.py"
-url_of_project = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/CavusVehicle-Online.py"
+url_of_project = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/ContainerVehicle-Online.py"
 destination = os.path.basename(__file__)
 data_type = str
 reader = pynmea2.NMEAStreamReader()
