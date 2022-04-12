@@ -52,6 +52,12 @@ def get_date():
     return datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S_')
 
 
+def error_handling():
+    exception_type, exception_object, exception_traceback = sys.exc_info()
+    line_number = exception_traceback.tb_lineno
+    logging.error(f"Type: {exception_type}\tObject: {exception_object}\tLine number: {line_number}")
+
+
 def write_json(json_data, json_file_name='locations.json'):
     if not os.path.isfile(f"{files_folder}/{json_file_name}"):
         with open(f"{files_folder}/{json_file_name}", "w"):
@@ -95,11 +101,8 @@ def upload_data(file_type, file_path=None, file_data=None):
                     if not result.status_code == 200:
                         logging.warning(f"Video Name couldn't uploaded! Status Code: {result.status_code}")
                         write_json(file_data, "uploaded_videos.json")
-                except Exception:
-                    exception_type, exception_object, exception_traceback = sys.exc_info()
-                    error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
-                    line_number = exception_traceback.tb_lineno
-                    logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
+                except:
+                    error_handling()
 
                     logging.warning(f"Video Name couldn't uploaded! Saving to file...")
                     write_json(file_data, "uploaded_videos.json")
@@ -113,12 +116,8 @@ def upload_data(file_type, file_path=None, file_data=None):
                 if not result.status_code == 200:
                     logging.warning(f"location couldn't uploaded! Status Code: {result.status_code}")
                     write_json(file_data, "locations.json")
-            except Exception:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
-                line_number = exception_traceback.tb_lineno
-                logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
-
+            except:
+                error_handling()
                 logging.warning(f"Location couldn't uploaded! Saving to file...")
                 write_json(file_data, "locations.json")
 
@@ -143,11 +142,8 @@ def upload_data(file_type, file_path=None, file_data=None):
             else:
                 logging.warning(f"uploaded_videos.json upload warning: {result.status_code}")
 
-    except Exception:
-        exception_type, exception_object, exception_traceback = sys.exc_info()
-        error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
-        line_number = exception_traceback.tb_lineno
-        logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
+    except:
+        error_handling()
 
 
 def check_folder():
@@ -162,128 +158,8 @@ def check_folder():
                     upload_data(file_type="locations", file_path=f"{files_folder}/locations.json")
                 if file.endswith(".mp4"):
                     upload_data(file_type="video", file_path=f"{files_folder}/{file}")
-    except Exception:
-        exception_type, exception_object, exception_traceback = sys.exc_info()
-        error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
-        line_number = exception_traceback.tb_lineno
-        logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
-
-
-# def check_server_msg():
-#     global server_msg, server, stream
-#     listen_time = time.time()
-#     while True:
-#         if server_msg == "wait":
-#             if time.time() - listen_time > 20:
-#                 logging.warning("There is no response from Server! Retrying the connection...")
-#                 server.close()
-#                 # time.sleep(5)
-#                 break
-#                 # start_listen_thread()
-#             time.sleep(0.1)
-#             continue
-#         if server_msg == b"$start$":
-#             stream = True
-#             logging.info("Starting to Stream")
-#             thread_list_folder = []
-#             for thread_folder in threading.enumerate():
-#                 thread_list_folder.append(thread_folder.name)
-#             if "opencv" not in thread_list_folder:
-#                 logging.info("Starting OpenCV")
-#                 threading.Thread(target=capture, name="opencv", daemon=True).start()
-#             time.sleep(1)
-#             break
-#
-#         elif server_msg == b"$stop$":
-#             stream = False
-#             logging.info("Stopping the stream.")
-#             time.sleep(1)
-#             break
-#
-#         elif server_msg == b"$k$":
-#             logging.info("Server is Alive")
-#             break
-#
-#         elif server_msg == b"":
-#             logging.info("Received empty byte! Closing the connection...")
-#             server.close()
-#             # time.sleep(5)
-#             # start_listen_thread()
-#             break
-#
-#         else:
-#             logging.warning(f"Unknown message from server: {server_msg}")
-#             time.sleep(5)
-#             continue
-
-
-# def start_listen_thread():
-#     threading.Thread(target=listen_to_server, name="listen_to_server", daemon=True).start()
-
-# def read_messages_from_server():
-#     global stream, server, server_msg, threadKill
-#     alive_msg = b"$k$"
-#     server_listen_time = time.time()
-#     try:
-#         while True:
-#             if server_msg == "wait":
-#                 if time.time() - server_listen_time < 30:
-#                     time.sleep(0.1)
-#                     continue
-#                 logging.warning("There is no response from Server in 30 seconds. Closing the connection...")
-#                 server.close()
-#                 break
-#
-#             elif server_msg != b"":
-#                 server_listen_time = time.time()
-#                 data_orig = server_msg.decode("utf-8")
-#                 server_msg = "wait"
-#                 merge_msg = False
-#                 messages = []
-#                 new_msg = ""
-#                 for d in data_orig:
-#                     if d == "$":
-#                         if not merge_msg:
-#                             merge_msg = True
-#                             continue
-#                         else:
-#                             merge_msg = False
-#                             messages.append(new_msg)
-#                             new_msg = ""
-#                     if merge_msg:
-#                         new_msg += d
-#
-#                 for command in messages:
-#                     if command == "start":
-#                         stream = True
-#                         logging.info("Stream started.")
-#                         thread_list_folder = []
-#                         for thread_folder in threading.enumerate():
-#                             thread_list_folder.append(thread_folder.name)
-#                         if "opencv" not in thread_list_folder:
-#                             logging.info("Starting OpenCV")
-#                             threading.Thread(target=capture, name="opencv", daemon=True).start()
-#
-#                     elif command == "stop":
-#                         stream = False
-#                         threadKill = True
-#                         logging.info("Stream stopped.")
-#                     elif command == "k":
-#                         server.sendall(alive_msg)
-#                         logging.info("Server is Online.")
-#                     else:
-#                         logging.warning(f"Unknown message from server: {command}")
-#                         time.sleep(5)
-#             else:
-#                 logging.error(f"Empty byte from Server. Closing the connection!: Server Message: {server_msg}")
-#                 server.close()
-#                 break
-#     except Exception:
-#         exception_type, exception_object, exception_traceback = sys.exc_info()
-#         error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
-#         line_number = exception_traceback.tb_lineno
-#         logging.error(
-#             f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
+    except:
+        error_handling()
 
 
 def listen_to_server():
@@ -367,12 +243,8 @@ def listen_to_server():
         print("Connection closed by server!: ", cse)
         stream = False
         time.sleep(5)
-    except Exception:
-        exception_type, exception_object, exception_traceback = sys.exc_info()
-        error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
-        line_number = exception_traceback.tb_lineno
-        logging.error(
-            f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
+    except:
+        error_handling()
         stream = False
         time.sleep(5)
 
@@ -447,14 +319,9 @@ def capture():
                     stream = False
                     time.sleep(5)
                     continue
-                except Exception:
-                    exception_type, exception_object, exception_traceback = sys.exc_info()
-                    error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
-                    line_number = exception_traceback.tb_lineno
-                    logging.error(
-                        f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
-                except OSError as err:
-                    logging.warning(f"{err}")
+
+                except:
+                    error_handling()
                     stream = False
 
             if save_picture:
@@ -499,12 +366,8 @@ def capture():
 
             cv2.waitKey(1)
 
-    except Exception:
-        exception_type, exception_object, exception_traceback = sys.exc_info()
-        error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
-        line_number = exception_traceback.tb_lineno
-        logging.error(
-            f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
+    except:
+        error_handling()
 
 
 def check_running_threads():
@@ -546,15 +409,11 @@ def internet_on():
             connection = False
             logging.info("There is no Internet!")
 
-    except Exception:
+    except:
         if connection:
             connection = False
             logging.info("There is no connection!")
-        exception_type, exception_object, exception_traceback = sys.exc_info()
-        error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
-        line_number = exception_traceback.tb_lineno
-        logging.error(
-            f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
+        error_handling()
 
 
 logging.info("System started")
@@ -619,12 +478,8 @@ try:
     values = json.loads(open('values.txt', 'r').read())
     garbageLocations = values['garbageLocations']
 
-except Exception:
-    exception_type, exception_object, exception_traceback = sys.exc_info()
-    error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
-    line_number = exception_traceback.tb_lineno
-    logging.error(
-        f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
+except:
+    error_handling()
 
 logging.info(f"Hostname: {hostname}\tPort: {gps_port}")
 
@@ -641,11 +496,8 @@ while True:
 
             code_date = datetime.datetime.fromtimestamp(os.path.getmtime(destination))
             logging.info(f"Running Code is up to date: {code_date}")
-    except Exception:
-        exception_type, exception_object, exception_traceback = sys.exc_info()
-        error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
-        line_number = exception_traceback.tb_lineno
-        logging.error(f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
+    except:
+        error_handling()
 
     if connection:
         try:
@@ -679,12 +531,8 @@ while True:
                 logging.info("Values saved to Local. Connected to the Internet.")
                 logging.info(f'Count of Garbage Locations: {len(garbageLocations)}')
 
-        except Exception:
-            exception_type, exception_object, exception_traceback = sys.exc_info()
-            error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
-            line_number = exception_traceback.tb_lineno
-            logging.error(
-                f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
+        except:
+            error_handling()
 
     try:
         with serial.Serial(port=gps_port, baudrate=9600, bytesize=8, timeout=1,
@@ -709,6 +557,8 @@ while True:
                     logging.warning(f"{verr}")
                     time.sleep(5)
                     break
+                except:
+                    error_handling()
 
         if data_type == "RMC":
             data_type = str
@@ -787,9 +637,5 @@ while True:
         logging.error(f"{serial_error}\tPort: {gps_port}")
         time.sleep(5)
 
-    except Exception:
-        exception_type, exception_object, exception_traceback = sys.exc_info()
-        error_file = os.path.split(exception_traceback.tb_frame.f_code.co_filename)[1]
-        line_number = exception_traceback.tb_lineno
-        logging.error(
-            f"Error type: {exception_type}\tError object: {exception_object}\tFilename: {error_file}\tLine number: {line_number}")
+    except:
+        error_handling()
