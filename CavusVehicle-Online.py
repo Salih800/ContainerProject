@@ -232,15 +232,15 @@ def listen_to_server():
         stream = False
         time.sleep(5)
     except ConnectionRefusedError as cre:
-        print("Connection Refused! Probably server is not online..: ", cre)
+        logging.warning("Connection Refused! Probably server is not online..: ", cre)
         stream = False
         time.sleep(5)
     except ConnectionAbortedError as cae:
-        logging.info("Connection closed by Client!: ", cae)
+        logging.warning("Connection closed by Client!: ", cae)
         stream = False
         time.sleep(5)
     except ConnectionResetError as cse:
-        print("Connection closed by server!: ", cse)
+        logging.warning("Connection closed by server!: ", cse)
         stream = False
         time.sleep(5)
     except:
