@@ -516,7 +516,8 @@ while True:
                     log_date = datetime.datetime.now().strftime("%Y-%m-%d")
                     log_time = datetime.datetime.now().strftime("%H-%M-%S")
                     log_file_name = f"{log_date}_{log_time}.log"
-                    subprocess.check_call(["rclone", "move", "project.log", f"gdrive:Python/ContainerFiles/{log_date}/{hostname}/logs/{log_file_name}"])
+                    shutil.copy("project.log", log_file_name)
+                    subprocess.check_call(["rclone", "copy", log_file_name, f"gdrive:Python/ContainerFiles/{log_date}/{hostname}/logs/"])
                     logging.info("'project.log' uploaded to gdrive.")
                     with open('project.log', 'r+') as file:
                         file.truncate()
