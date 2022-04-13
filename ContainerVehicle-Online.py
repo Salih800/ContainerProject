@@ -425,21 +425,20 @@ def check_internet():
     global pTimeCheck
     global garbageLocations
     global values
-    # global stream_thread
+
     while True:
         try:
-            if time.time() - check_connection > 30:
-                check_connection = time.time()
-                logging.info("Checking Connection...")
-
             if time.time() - pTimeConnection > 3600:
                 pTimeConnection = time.time()
                 code_date = datetime.datetime.fromtimestamp(os.path.getmtime(destination))
                 logging.info(f"Running Code is up to date: {code_date}")
 
-            requests.get(url_check)
+            requests.get(url_check, timeout=10)
 
             connection = True
+            if time.time() - check_connection > 60:
+                check_connection = time.time()
+                logging.info("Internet Connected.")
 
             if connection:
                 if "check_folder" not in check_running_threads():
@@ -449,25 +448,9 @@ def check_internet():
                     logging.info("Streaming Thread is starting...")
                     threading.Thread(target=listen_to_server, name="listen_to_server", daemon=True).start()
                 if time.time() - pTimeCheck > 7200:
-                    pTimeCheck = time.time()
+                    pTimeCheck = time.time() - 7080
 
-                    log_size = os.path.getsize("project.log") / (1024 * 1024)
-                    if log_size > 1:
-                        log_date = datetime.datetime.now().strftime("%Y-%m-%d")
-                        log_time = datetime.datetime.now().strftime("%H-%M-%S")
-                        log_file_name = f"{log_date}_{log_time}_{hostname}.log"
-                        logging.info(f"Trying to upload {log_file_name}...")
-                        shutil.copy("project.log", log_file_name)
-                        rclone_log = subprocess.check_call(
-                            ["rclone", "move", log_file_name,
-                             f"gdrive:Python/ContainerFiles/{log_date}/{hostname}/logs/"])
-                        if not os.path.isfile(log_file_name):
-                            with open('project.log', 'r+') as file:
-                                file.truncate()
-                            logging.info(f"{log_file_name} uploaded to gdrive.")
-                        if os.path.isfile(log_file_name):
-                            logging.warning(f"{log_file_name} log file couldn't uploaded! Rclone Status: {rclone_log}")
-                            os.remove(log_file_name)
+                    logging.info("Checking for updates...")
 
                     r = requests.get(url_of_project)
                     if r.status_code == 200:
@@ -491,10 +474,28 @@ def check_internet():
                         json.dump(values, jsonfile)
                     garbageLocations = values['garbageLocations']
 
-                    logging.info("Values saved to Local. Connected to the Internet.")
+                    logging.info("Values saved to Local.")
                     logging.info(f'Count of Garbage Locations: {len(garbageLocations)}')
 
-                logging.info("Internet Connected")
+                    log_size = os.path.getsize("project.log") / (1024 * 1024)
+                    if log_size > 1:
+                        log_date = datetime.datetime.now().strftime("%Y-%m-%d")
+                        log_time = datetime.datetime.now().strftime("%H-%M-%S")
+                        log_file_name = f"{log_date}_{log_time}_{hostname}.log"
+                        logging.info(f"Trying to upload {log_file_name}...")
+                        shutil.copy("project.log", log_file_name)
+                        rclone_log = subprocess.check_call(
+                            ["rclone", "move", log_file_name,
+                             f"gdrive:Python/ContainerFiles/{log_date}/{hostname}/logs/"])
+                        if not os.path.isfile(log_file_name):
+                            with open('project.log', 'r+') as file:
+                                file.truncate()
+                            logging.info(f"{log_file_name} uploaded to gdrive.")
+                        if os.path.isfile(log_file_name):
+                            logging.warning(f"{log_file_name} log file couldn't uploaded! Rclone Status: {rclone_log}")
+                            os.remove(log_file_name)
+
+                    pTimeCheck = time.time()
 
         except requests.exceptions.ConnectionError:
             if connection:
