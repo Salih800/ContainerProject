@@ -177,7 +177,8 @@ def check_folder():
         files_list = os.listdir(files_folder)
         for file_to_upload in files_list:
             if connection:
-                logging.info(f"Files in folder: {len(files_list)}")
+                if len(files_list) > 1:
+                    logging.info(f"Files in folder: {len(files_list)}")
                 if os.path.isfile(f"{files_folder}/uploaded_files.json"):
                     upload_data(file_type="uploaded_files", file_path=f"{files_folder}/uploaded_files.json")
                 if os.path.isfile(f"{files_folder}/uploaded_videos.json"):
@@ -416,6 +417,7 @@ def check_internet():
     global pTimeCheck
     global garbageLocations
     global values
+    global check_folder_time
     # global stream_thread
     while True:
         try:
@@ -433,7 +435,8 @@ def check_internet():
             connection = True
 
             if connection:
-                if "check_folder" not in check_running_threads():
+                if "check_folder" not in check_running_threads() and time.time() - check_folder_time > 300:
+                    check_folder_time = time.time()
                     logging.info("Checking folder...")
                     threading.Thread(target=check_folder, name="check_folder", daemon=True).start()
                 if "listen_to_server" not in check_running_threads():
@@ -524,6 +527,7 @@ connection = False
 check_connection = 0
 running_threads_check_time = 0
 santiye_location = [41.09892610381052, 28.780632617146328]
+check_folder_time = 0
 
 files_folder = "files"
 detectLocationDistance = 61
