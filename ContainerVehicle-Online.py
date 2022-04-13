@@ -300,6 +300,8 @@ def capture(camera_mode):
         global threadKill
         global frame_count
         global stream
+        global pass_the_id
+        global take_picture
 
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.7
@@ -383,7 +385,10 @@ def capture(camera_mode):
                     logging.warning(f"Opencv couldn't find the file: {image_file_path}")
                 frame_count += 1
             elif frame_count >= 400:
-                logging.warning(f"Picture count is high! Passing the frame..: {frame_count}")
+                logging.warning(f"Picture count is high! Passing the frame..: {frame_count} and id number: {id_number}")
+                pass_the_id = id_number
+                take_picture = False
+                save_picture = False
 
             if threadKill:
                 threadKill = False
@@ -477,6 +482,7 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 frame_count = 0
 uploaded_folder = "uploaded_files"
 server_msg = "wait"
+pass_the_id = 0
 
 try:
     subprocess.check_call(["ls", "/dev/ttyACM0"])
@@ -633,8 +639,12 @@ while True:
                         distance = geopy.distance.distance(location_gps, garbageLocation[:2]).meters
                         distances.append(distance)
                         if distance < detectLocationDistance:
-                            picture_count = 0
                             id_number = garbageLocation[2]
+                            if pass_the_id == id_number:
+                                continue
+                            pass_the_id = 0
+                            frame_count = 0
+                            # id_number = garbageLocation[2]
                             take_picture = True
                             logging.info(f'Found a close garbage. Distance is: {round(distance, 2)} meters')
                             break
@@ -653,7 +663,7 @@ while True:
                         time.sleep(1)
                 else:
                     logging.warning(f"save_picture was {save_picture}")
-                    save_picture = False
+                    take_picture = False
                     logging.warning(subprocess.call(["ls", "/dev/video0"]))
 
                 if minDistance >= 100 and not stream:
