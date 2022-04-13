@@ -128,6 +128,9 @@ def upload_data(file_type, file_path=None, file_data=None):
                 if not result.status_code == 200:
                     logging.warning(f"location couldn't uploaded! Status Code: {result.status_code}")
                     write_json(file_data, "locations.json")
+            except requests.exceptions.ConnectionError:
+                logging.warning(f"No internet. Location couldn't uploaded! Saving to file...")
+                write_json(file_data, "locations.json")
             except:
                 error_handling()
 
@@ -170,9 +173,9 @@ def upload_data(file_type, file_path=None, file_data=None):
 
 def check_folder():
     try:
-        if connection:
-            files_list = os.listdir(files_folder)
-            for file in files_list:
+        files_list = os.listdir(files_folder)
+        for file_to_upload in files_list:
+            if connection:
                 logging.info(f"Files in folder: {len(files_list)}")
                 if os.path.isfile(f"{files_folder}/uploaded_files.json"):
                     upload_data(file_type="uploaded_files", file_path=f"{files_folder}/uploaded_files.json")
@@ -180,8 +183,8 @@ def check_folder():
                     upload_data(file_type="uploaded_images", file_path=f"{files_folder}/uploaded_images.json")
                 if os.path.isfile(f"{files_folder}/locations.json"):
                     upload_data(file_type="locations", file_path=f"{files_folder}/locations.json")
-                if file.endswith(".jpg"):
-                    upload_data(file_type="image", file_path=f"{files_folder}/{file}")
+                if file_to_upload.endswith(".jpg"):
+                    upload_data(file_type="image", file_path=f"{files_folder}/{file_to_upload}")
     except:
         error_handling()
 
@@ -404,44 +407,100 @@ def capture(camera_mode):
 
 
 def check_running_threads():
-    thread_list_folder = []
-    for thread_folder in threading.enumerate():
-        thread_list_folder.append(thread_folder.name)
-    logging.info(f"Running Threads: {thread_list_folder}")
+    global running_threads_check_time
+    threads = [thread.name for thread in threading.enumerate()]
+    if time.time() - running_threads_check_time > 30:
+        running_threads_check_time = time.time()
+        logging.info(f"Running Threads: {threads}")
+    return threads
 
 
-def internet_on():
+def check_internet():
     global connection
     global url_check
+    global pTimeConnection
+    global check_connection
+    global pTimeCheck
+    global garbageLocations
+    global values
     # global stream_thread
-    try:
-        check_running_threads()
-        requests.get(url_check)
-        if not connection:
+    while True:
+        try:
+            if time.time() - check_connection > 30:
+                check_connection = time.time()
+                logging.info("Checking Connection...")
+
+            if time.time() - pTimeConnection > 3600:
+                pTimeConnection = time.time()
+                code_date = datetime.datetime.fromtimestamp(os.path.getmtime(destination))
+                logging.info(f"Running Code is up to date: {code_date}")
+
+            requests.get(url_check)
+
             connection = True
-        if connection:
-            thread_list_folder = []
-            for thread_folder in threading.enumerate():
-                thread_list_folder.append(thread_folder.name)
-            if "check_folder" not in thread_list_folder:
-                logging.info("Checking folder...")
-                threading.Thread(target=check_folder, name="check_folder", daemon=True).start()
-            if "listen_to_server" not in thread_list_folder:
-                logging.info("listen_to_server is starting...")
-                threading.Thread(target=listen_to_server, name="listen_to_server", daemon=True).start()
 
-            logging.info("Internet Connected")
+            if connection:
+                if "check_folder" not in check_running_threads():
+                    logging.info("Checking folder...")
+                    threading.Thread(target=check_folder, name="check_folder", daemon=True).start()
+                if "listen_to_server" not in check_running_threads():
+                    logging.info("Streaming Thread is starting...")
+                    threading.Thread(target=listen_to_server, name="listen_to_server", daemon=True).start()
+                if time.time() - pTimeCheck > 7200:
+                    pTimeCheck = time.time()
 
-    except requests.exceptions.ConnectionError:
-        if connection:
-            connection = False
-            logging.info("There is no Internet!")
+                    log_size = os.path.getsize("project.log") / (1024 * 1024)
+                    if log_size > 1:
+                        log_date = datetime.datetime.now().strftime("%Y-%m-%d")
+                        log_time = datetime.datetime.now().strftime("%H-%M-%S")
+                        log_file_name = f"{log_date}_{log_time}_{hostname}.log"
+                        shutil.copy("project.log", log_file_name)
+                        subprocess.check_call(
+                            ["rclone", "move", log_file_name,
+                             f"gdrive:Python/ContainerFiles/{log_date}/{hostname}/logs/"])
+                        with open('project.log', 'r+') as file:
+                            file.truncate()
+                        logging.info("'project.log' uploaded to gdrive.")
 
-    except:
-        if connection:
-            connection = False
-            logging.info("There is no connection!")
-        error_handling()
+                    r = requests.get(url_of_project)
+                    if r.status_code == 200:
+                        with open(downloaded, "w") as downloaded_file:
+                            downloaded_file.write(r.text)
+
+                        if hash_check(destination) != hash_check(downloaded):
+                            logging.info("New update found! Changing the code...")
+                            shutil.move(downloaded, destination)
+                            logging.info("Code change completed.")
+                            restart_system()
+                        else:
+                            logging.info("No update found!")
+
+                    else:
+                        logging.warning(f"Github Error: {r.status_code}")
+
+                    values = requests.get(url_upload + hostname).json()
+
+                    with open('values.txt', 'w') as jsonfile:
+                        json.dump(values, jsonfile)
+                    garbageLocations = values['garbageLocations']
+
+                    logging.info("Values saved to Local. Connected to the Internet.")
+                    logging.info(f'Count of Garbage Locations: {len(garbageLocations)}')
+
+                logging.info("Internet Connected")
+
+        except requests.exceptions.ConnectionError:
+            if connection:
+                connection = False
+                logging.info("There is no Internet!")
+
+        except:
+            if connection:
+                connection = False
+                logging.info("There is no connection!")
+            error_handling()
+
+        time.sleep(10)
 
 
 logging.info("System started")
@@ -470,6 +529,7 @@ timeout = 10
 # picture_folder = "pictures/"
 connection = False
 check_connection = 0
+running_threads_check_time = 0
 
 files_folder = "files"
 detectLocationDistance = 40
@@ -488,7 +548,6 @@ pass_the_id = 0
 try:
     subprocess.check_call(["ls", "/dev/ttyACM0"])
     gps_port = "/dev/ttyACM0"
-
 except:
     gps_port = "/dev/ttyS0"
 
@@ -511,67 +570,9 @@ except:
 
 logging.info(f"Hostname: {hostname}\tGPS Port: {gps_port}")
 
+threading.Thread(target=check_internet, name="check_internet", daemon=True).start()
+
 while True:
-    try:
-        if time.time() - check_connection > 10:
-            check_connection = time.time()
-            logging.info("Checking Connection...")
-            threading.Thread(target=internet_on, name="internet_on", daemon=True).start()
-
-        if time.time() - pTimeConnection > 3600:
-            pTimeConnection = time.time()
-
-            code_date = datetime.datetime.fromtimestamp(os.path.getmtime(destination))
-            logging.info(f"Running Code is up to date: {code_date}")
-    except:
-        error_handling()
-
-    if connection:
-        try:
-            if time.time() - pTimeCheck > 7200:
-                pTimeCheck = time.time() - 7020
-
-                log_size = os.path.getsize("project.log") / (1024 * 1024)
-                if log_size > 1:
-                    log_date = datetime.datetime.now().strftime("%Y-%m-%d")
-                    log_time = datetime.datetime.now().strftime("%H-%M-%S")
-                    log_file_name = f"{log_date}_{log_time}_{hostname}.log"
-                    shutil.copy("project.log", log_file_name)
-                    subprocess.check_call(["rclone", "move", log_file_name, f"gdrive:Python/ContainerFiles/{log_date}/{hostname}/logs/"])
-                    with open('project.log', 'r+') as file:
-                        file.truncate()
-                    logging.info("'project.log' uploaded to gdrive.")
-
-                r = requests.get(url_of_project)
-                if r.status_code == 200:
-                    with open(downloaded, "w") as downloaded_file:
-                        downloaded_file.write(r.text)
-
-                    if hash_check(destination) != hash_check(downloaded):
-                        logging.info("New update found! Changing the code...")
-                        shutil.move(downloaded, destination)
-                        logging.info("Code change completed.")
-                        # subprocess.call(["python", destination])
-                        restart_system()
-                    else:
-                        logging.info("No update found!")
-
-                else:
-                    logging.warning(f"Github Error: {r.status_code}")
-
-                values = requests.get(url_upload + hostname).json()
-
-                with open('values.txt', 'w') as jsonfile:
-                    json.dump(values, jsonfile)
-                garbageLocations = values['garbageLocations']
-
-                logging.info("Values saved to Local. Connected to the Internet.")
-                logging.info(f'Count of Garbage Locations: {len(garbageLocations)}')
-                pTimeCheck = time.time()
-
-        except:
-            error_handling()
-
     try:
         with serial.Serial(port=gps_port, baudrate=9600, bytesize=8, timeout=1,
                            stopbits=serial.STOPBITS_ONE) as gps_data:
@@ -668,16 +669,12 @@ while True:
                     logging.warning(subprocess.call(["ls", "/dev/video0"]))
 
                 if minDistance >= 100 and not stream:
-                    for thread in threading.enumerate():
-                        if thread.name == "opencv":
-                            logging.info("Killing OpenCV")
-                            threadKill = True
+                    if "opencv" in check_running_threads():
+                        logging.info("Closing camera...")
+                        threadKill = True
 
                 elif minDistance < 100:
-                    thread_list = []
-                    for thread in threading.enumerate():
-                        thread_list.append(thread.name)
-                    if "opencv" not in thread_list:
+                    if "opencv" not in check_running_threads():
                         logging.info("Starting OpenCV")
                         threading.Thread(target=capture, name="opencv", args=("record", ), daemon=True).start()
 
