@@ -70,19 +70,20 @@ def restart_system():
 
 
 def write_json(json_data, json_file_name='locations.json'):
-    if not os.path.isfile(f"{files_folder}/{json_file_name}"):
-        with open(f"{files_folder}/{json_file_name}", "w"):
+    json_file_path = f"{files_folder}/{json_file_name}"
+    if not os.path.isfile(json_file_path):
+        with open(json_file_path, "w"):
             pass
 
     json_data = json.dumps(json_data)
-    with open(f"{files_folder}/{json_file_name}", 'r+') as file:
-        data = file.read()
+    with open(json_file_path, 'r+') as json_file:
+        data = json_file.read()
         if len(data) < 1:
             data = f"[{json_data}]"
         else:
-            file.seek(len(data)-1)
+            json_file.seek(len(data)-1)
             data = f",{json_data}]"
-        file.write(data)
+        json_file.write(data)
 
 
 def upload_data(file_type, file_path=None, file_data=None):
@@ -100,8 +101,9 @@ def upload_data(file_type, file_path=None, file_data=None):
             if status_code == 200 and status == "success":
                 uploaded_file = result.json()["filename"]
                 logging.info(f"Image File uploaded: {file_name}\tUploaded File: {uploaded_file}")
-                # os.remove(file_path)
-                shutil.move(file_path, uploaded_folder)
+                write_json({file_name: uploaded_file}, "uploaded_files.json")
+                os.remove(file_path)
+                # shutil.move(file_path, uploaded_folder)
                 file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
                 file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
                 file_data = {"file_name": uploaded_file, "date": f"{file_date}", "lat": file_lat, "lng": file_lng, "id": file_id}
@@ -151,6 +153,15 @@ def upload_data(file_type, file_path=None, file_data=None):
                 os.remove(file_path)
             else:
                 logging.warning(f"uploaded_images.json upload warning: {result.status_code}")
+        elif file_type == "uploaded_files":
+            if os.path.getsize(file_path) / 1024 > 500:
+                uploaded_files_date = datetime.datetime.now().strftime("%Y-%m-%d")
+                uploaded_files_time = datetime.datetime.now().strftime("%H-%M-%S")
+                uploaded_files_name = f"{uploaded_files_date}_{uploaded_files_time}_{hostname}.json"
+                shutil.move(file_path, uploaded_files_name)
+                subprocess.check_call(
+                    ["rclone", "move", uploaded_files_name, f"gdrive:Python/ContainerFiles/{uploaded_files_date}/{hostname}/pictures/"])
+                logging.info("'uploaded_files.json' uploaded to gdrive.")
 
     except:
         error_handling()
@@ -162,6 +173,8 @@ def check_folder():
             files_list = os.listdir(files_folder)
             for file in files_list:
                 logging.info(f"Files in folder: {len(files_list)}")
+                if os.path.isfile(f"{files_folder}/uploaded_files.json"):
+                    upload_data(file_type="uploaded_files", file_path=f"{files_folder}/uploaded_files.json")
                 if os.path.isfile(f"{files_folder}/uploaded_images.json"):
                     upload_data(file_type="uploaded_images", file_path=f"{files_folder}/uploaded_images.json")
                 if os.path.isfile(f"{files_folder}/locations.json"):
