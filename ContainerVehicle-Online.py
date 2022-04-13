@@ -67,6 +67,7 @@ def error_handling():
 def restart_system():
     logging.info("Restarting the system")
     subprocess.call(["sudo", "reboot"])
+    sys.exit("Rebooting...")
 
 
 def write_json(json_data, json_file_name='locations.json'):
@@ -549,9 +550,9 @@ while True:
                     if hash_check(destination) != hash_check(downloaded):
                         logging.info("New update found! Changing the code...")
                         shutil.move(downloaded, destination)
-                        logging.info("Code change completed. Restarting...")
+                        logging.info("Code change completed.")
                         # subprocess.call(["python", destination])
-                        subprocess.call(["sudo", "reboot"])
+                        restart_system()
                     else:
                         logging.info("No update found!")
 
