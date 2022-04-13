@@ -103,7 +103,7 @@ def upload_data(file_type, file_path=None, file_data=None):
             if status_code == 200 and status == "success":
                 uploaded_file = result.json()["filename"]
                 logging.info(f"Video File uploaded: {file_name}\tUploaded File: {uploaded_file}")
-                write_json({file_name: uploaded_file}, "uploaded_files.json")
+                write_json({"file_name": file_name, "uploaded_file": uploaded_file}, "uploaded_files.json")
                 os.remove(file_path)
                 # shutil.move(file_path, uploaded_folder)
                 file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
