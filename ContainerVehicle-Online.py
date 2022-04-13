@@ -531,9 +531,9 @@ while True:
                     log_file_name = f"{log_date}_{log_time}_{hostname}.log"
                     shutil.copy("project.log", log_file_name)
                     subprocess.check_call(["rclone", "move", log_file_name, f"gdrive:Python/ContainerFiles/{log_date}/{hostname}/logs/"])
-                    logging.info("'project.log' uploaded to gdrive.")
                     with open('project.log', 'r+') as file:
                         file.truncate()
+                    logging.info("'project.log' uploaded to gdrive.")
 
                 r = requests.get(url_of_project)
                 if r.status_code == 200:
