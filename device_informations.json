@@ -1,7 +1,7 @@
-[
-  {"device_name": "rpi-2", "device_type": "garbage", "vehicle_plate": "DZL 090", "program": "ContainerVehicle-Online.py"},
-  {"device_name": "rpi-3", "device_type": "garbage", "vehicle_plate": "FN 9748", "program": "ContainerVehicle-Online.py"},
-  {"device_name": "rpi-4", "device_type": "garbage-caca", "vehicle_plate": "FN 8705", "program": "ContainerVehicle-Online.py"},
-  {"device_name": "rpi-6", "device_type": "cavus", "vehicle_plate": "34 COC 571", "program": "CavusVehicle-Online.py"},
-  {"device_name": "rpi-7", "device_type": "cavus", "vehicle_plate": "34 FN 9970", "program": "CavusVehicle-Online.py"}
-]
+{
+  "rpi-2": {"device_type": "garbage", "vehicle_plate": "DZL 090", "program": "ContainerVehicle-Online.py"},
+  "rpi-3": {"device_type": "garbage", "vehicle_plate": "FN 9748", "program": "ContainerVehicle-Online.py"},
+  "rpi-4": {"device_type": "garbage-caca", "vehicle_plate": "FN 8705", "program": "ContainerVehicle-Online.py"},
+  "rpi-6": {"device_type": "cavus", "vehicle_plate": "34 COC 571", "program": "CavusVehicle-Online.py"},
+  "rpi-7": {"device_type": "cavus", "vehicle_plate": "34 FN 9970", "program": "CavusVehicle-Online.py"}
+}
