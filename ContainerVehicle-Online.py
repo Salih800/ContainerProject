@@ -646,7 +646,7 @@ while True:
                         logging.info(
                             f'Distance Detection Interval: {detectLocationDistance}\tDistance: {round(distance, 2)} meters')
                         photo_date = date_local.strftime('%Y-%m-%d__%H-%M-%S,,')
-                        filename = f'{photo_date}{location_gps[0]},{location_gps[1]},{id_number}.jpg'
+                        filename = f'{photo_date}{location_gps[0]},{location_gps[1]},{id_number}'
 
                         save_picture = True
                         # logging.warning(subprocess.call(["ls", "/dev/video0"]))
