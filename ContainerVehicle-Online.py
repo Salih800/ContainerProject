@@ -659,8 +659,8 @@ while True:
                             logging.info(f'Found a close garbage. Distance is: {round(distance, 2)} meters')
                             break
                     minDistance = min(distances)
+                    logging.info(f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds and Minimum distance = {round(minDistance, 2)} meters')
                     if geopy.distance.distance(location_gps, santiye_location).meters < 100:
-                        logging.info(f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds and Minimum distance = {round(minDistance, 2)} meters')
                         time.sleep(30)
                 if not save_picture:
                     if take_picture and speed_in_kmh < 5.0:
