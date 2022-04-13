@@ -653,7 +653,7 @@ while True:
                         time.sleep(1)
                 else:
                     logging.warning(f"save_picture was {save_picture}")
-                    save_picture = True
+                    save_picture = False
                     logging.warning(subprocess.call(["ls", "/dev/video0"]))
 
                 if minDistance >= 100 and not stream:
