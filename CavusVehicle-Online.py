@@ -523,6 +523,7 @@ picture_folder = "pictures/"
 connection = False
 check_connection = 0
 running_threads_check_time = 0
+santiye_location = [41.09892610381052, 28.780632617146328]
 
 files_folder = "files"
 detectLocationDistance = 61
@@ -644,8 +645,10 @@ while True:
                             break
 
                     minDistance = min(distances)
-                    logging.info(
-                        f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds and Minimum distance = {round(minDistance, 2)} meters')
+                    if geopy.distance.distance(location_gps, santiye_location).meters < 100:
+                        logging.info(
+                            f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds and Minimum distance = {round(minDistance, 2)} meters')
+                        time.sleep(30)
 
                 if minDistance >= 100 and not stream:
                     if "opencv" in check_running_threads():
