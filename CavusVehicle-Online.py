@@ -445,10 +445,11 @@ def check_internet():
 
                     logging.info("Checking for updates...")
 
-                    r = requests.get(url_of_project)
-                    if r.status_code == 200:
+                    device_information = requests.get(device_informations).json()[hostname]
+                    code = requests.get(url_of_project + device_information["program"])
+                    if code.status_code == 200:
                         with open(downloaded, "w") as downloaded_file:
-                            downloaded_file.write(r.text)
+                            downloaded_file.write(code.text)
 
                         if hash_check(destination) != hash_check(downloaded):
                             logging.info("New update found! Changing the code...")
@@ -459,7 +460,7 @@ def check_internet():
                             logging.info("No update found!")
 
                     else:
-                        logging.warning(f"Github Error: {r.status_code}")
+                        logging.warning(f"Github Error: {code.status_code}")
 
                     values = requests.get(url_upload + hostname).json()
 
@@ -509,7 +510,8 @@ logging.info("System started\n\n")
 time.sleep(3)
 
 downloaded = "downloaded_file.py"
-url_of_project = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/CavusVehicle-Online.py"
+url_of_project = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/"
+device_informations = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/device_informations.json"
 destination = os.path.basename(__file__)
 data_type = str
 reader = pynmea2.NMEAStreamReader()
