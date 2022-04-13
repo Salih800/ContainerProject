@@ -504,7 +504,7 @@ def check_internet():
         time.sleep(20)
 
 
-logging.info("\nSystem started")
+logging.info("System started\n\n")
 
 time.sleep(3)
 
