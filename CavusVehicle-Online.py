@@ -89,13 +89,14 @@ def write_json(json_data, json_file_name='locations.json'):
 
 def upload_data(file_type, file_path=None, file_data=None):
     global uploaded_folder
+    timeout_to_upload = 60
     try:
         if file_type == "video":
             file_name = os.path.basename(file_path)
             with open(file_path, 'rb') as video:
                 files = {'file': (file_name, video, 'multipart/form-data', {'Expires': '0'})}
 
-                result = requests.post(url_harddrive, files=files)
+                result = requests.post(url_harddrive, files=files, timeout=timeout_to_upload)
                 status_code = result.status_code
                 # logging.info(f"result.json(): {result.json()}")
                 status = result.json()["status"]
@@ -104,34 +105,37 @@ def upload_data(file_type, file_path=None, file_data=None):
                 uploaded_file = result.json()["filename"]
                 logging.info(f"Video File uploaded: {file_name}\tUploaded File: {uploaded_file}")
                 write_json({"file_name": file_name, "uploaded_file": uploaded_file}, "uploaded_files.json")
-                os.remove(file_path)
                 # shutil.move(file_path, uploaded_folder)
                 file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
                 file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
                 file_data = {"file_name": uploaded_file, "date": f"{file_date}", "lat": file_lat, "lng": file_lng, "id": file_id}
 
                 try:
-                    result = requests.post(url_image + hostname, json=file_data)
+                    result = requests.post(url_image + hostname, json=file_data, timeout=timeout_to_upload)
                     if not result.status_code == 200:
                         logging.warning(f"Video Name couldn't uploaded! Status Code: {result.status_code}")
                         write_json(file_data, "uploaded_videos.json")
                 except:
                     error_handling()
-
                     logging.warning(f"Video Name couldn't uploaded! Saving to file...")
                     write_json(file_data, "uploaded_videos.json")
+
+                os.remove(file_path)
 
             else:
                 logging.error(f"Video file couldn't uploaded! Status Code: {result.status_code}\tStatus: {result.json()}")
 
         elif file_type == "location":
             try:
-                result = requests.post(url_location + hostname, json=file_data)
+                result = requests.post(url_location + hostname, json=file_data, timeout=timeout_to_upload)
                 if not result.status_code == 200:
                     logging.warning(f"location couldn't uploaded! Status Code: {result.status_code}")
                     write_json(file_data, "locations.json")
             except requests.exceptions.ConnectionError:
                 logging.warning(f"No internet. Location couldn't uploaded! Saving to file...")
+                write_json(file_data, "locations.json")
+            except requests.exceptions.ReadTimeout:
+                logging.warning(f"Connection timeout in {timeout_to_upload} seconds: {url_location}")
                 write_json(file_data, "locations.json")
             except:
                 error_handling()
@@ -141,7 +145,7 @@ def upload_data(file_type, file_path=None, file_data=None):
         elif file_type == "locations":
             with open(file_path) as file:
                 location_json = json.load(file)
-            result = requests.post(url_location + hostname, json=location_json)
+            result = requests.post(url_location + hostname, json=location_json, timeout=timeout_to_upload)
             if result.status_code == 200:
                 logging.info("locations.json uploaded")
                 os.remove(file_path)
@@ -151,8 +155,7 @@ def upload_data(file_type, file_path=None, file_data=None):
         elif file_type == "uploaded_videos":
             with open(file_path) as file:
                 videos_json = json.load(file)
-            result = requests.post(url_image + hostname, json=videos_json)
-
+            result = requests.post(url_image + hostname, json=videos_json, timeout=timeout_to_upload)
             if result.status_code == 200:
                 logging.info("uploaded_videos.json uploaded")
                 os.remove(file_path)
@@ -419,6 +422,8 @@ def check_internet():
     global garbageLocations
     global values
 
+    timeout_to_download = 20
+
     while True:
         try:
             if time.time() - pTimeConnection > 3600:
@@ -426,7 +431,7 @@ def check_internet():
                 code_date = datetime.datetime.fromtimestamp(os.path.getmtime(destination))
                 logging.info(f"Running Code is up to date: {code_date}")
 
-            requests.get(url_check, timeout=10)
+            requests.get(url_check, timeout=timeout_to_download)
 
             connection = True
             if time.time() - check_connection > 60:
@@ -445,8 +450,8 @@ def check_internet():
 
                     logging.info("Checking for updates...")
 
-                    device_information = requests.get(device_informations).json()[hostname]
-                    code = requests.get(url_of_project + device_information["program"])
+                    device_information = requests.get(device_informations, timeout=timeout_to_download).json()[hostname]
+                    code = requests.get(url_of_project + device_information["program"], timeout=timeout_to_download)
                     if code.status_code == 200:
                         with open(downloaded, "w") as downloaded_file:
                             downloaded_file.write(code.text)
@@ -462,7 +467,7 @@ def check_internet():
                     else:
                         logging.warning(f"Github Error: {code.status_code}")
 
-                    values = requests.get(url_upload + hostname).json()
+                    values = requests.get(url_upload + hostname, timeout=timeout_to_download).json()
 
                     with open('values.txt', 'w') as jsonfile:
                         json.dump(values, jsonfile)
@@ -495,10 +500,10 @@ def check_internet():
             if connection:
                 connection = False
                 logging.info("There is no Internet!")
-        except requests.exceptions.ReadTimeout:
+        except requests.exceptions.ReadTimeout as timeout_error:
             if connection:
                 connection = False
-            logging.warning("Connection timeout in 10 seconds: ", url_check)
+            logging.warning(f"Connection timeout in {timeout_to_download} seconds: {timeout_error}")
 
         except:
             if connection:
