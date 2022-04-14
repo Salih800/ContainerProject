@@ -184,12 +184,12 @@ def get_folder_size(path_to_folder):
     return size
 
 
-def file_size_unit(size: int) -> str:
+def file_size_unit(size: int, elapsed_time):
     for unit in ("B", "K", "M", "G", "T"):
         if size < 1024:
             break
         size /= 1024
-    return f"{size:.1f}{unit}"
+    return f"{size:.1f}{unit}", f"{size/elapsed_time:.1f}{unit}/s"
 
 
 def check_folder():
@@ -211,9 +211,10 @@ def check_folder():
                     upload_data(file_type="video", file_path=f"{files_folder}/{file_to_upload}")
         total_uploaded_file = len(files_list) - len(os.listdir(files_folder))
         if total_uploaded_file > 0:
-            upload_end_size = file_size_unit(upload_start_size - get_folder_size(files_folder))
             upload_end_time = round(time.time() - upload_start_time, 2)
-            logging.info(f"{total_uploaded_file} files and {upload_end_size} uploaded in {upload_end_time} seconds")
+            upload_end_size, ratio = file_size_unit(upload_start_size - get_folder_size(files_folder), upload_end_time)
+            logging.info(f"{total_uploaded_file} files and {upload_end_size} "
+                         f"uploaded in {upload_end_time} seconds. Ratio: {ratio}")
         time.sleep(60)
     except:
         error_handling()
