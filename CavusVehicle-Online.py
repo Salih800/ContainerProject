@@ -104,11 +104,14 @@ def upload_data(file_type, file_path=None, file_data=None):
             if status_code == 200 and status == "success":
                 uploaded_file = result.json()["filename"]
                 logging.info(f"Video File uploaded: {file_name}")
-                write_json({"file_name": file_name, "uploaded_file": uploaded_file}, "uploaded_files.json")
                 # shutil.move(file_path, uploaded_folder)
                 file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
                 file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
                 file_data = {"file_name": uploaded_file, "date": f"{file_date}", "lat": file_lat, "lng": file_lng, "id": file_id}
+
+                my_file_data = {"device_name": hostname, "device_type": device_type, "file_id": uploaded_file,
+                                "date": f"{file_date}", "lat": file_lat, "lng": file_lng, "location_id": file_id}
+                write_json(my_file_data, "uploaded_files.json")
 
                 try:
                     result = requests.post(url_image + hostname, json=file_data, timeout=timeout_to_upload)
@@ -446,6 +449,7 @@ def check_internet():
     global pTimeCheck
     global garbageLocations
     global values
+    global device_type
 
     timeout_to_download = 20
 
@@ -476,6 +480,9 @@ def check_internet():
                     logging.info("Checking for updates...")
 
                     device_information = requests.get(device_informations, timeout=timeout_to_download).json()[hostname]
+                    with open("config.json", "w") as config:
+                        config.write(device_information)
+                    device_type = device_information["device_type"]
                     code = requests.get(url_of_project + device_information["program"], timeout=timeout_to_download)
                     if code.status_code == 200:
                         with open(downloaded, "w") as downloaded_file:
@@ -568,6 +575,7 @@ connection = False
 check_connection = 0
 running_threads_check_time = 0
 santiye_location = [41.09892610381052, 28.780632617146328]
+device_type = None
 
 files_folder = "files"
 detectLocationDistance = 61
@@ -602,6 +610,9 @@ try:
     logging.info("Getting values from local...")
     values = json.loads(open('values.txt', 'r').read())
     garbageLocations = values['garbageLocations']
+
+    saved_config = json.loads(open('config.json', 'r').read())
+    device_type = saved_config["device_type"]
 
 except:
     error_handling()
