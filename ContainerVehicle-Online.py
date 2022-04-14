@@ -176,9 +176,28 @@ def upload_data(file_type, file_path=None, file_data=None):
         error_handling()
 
 
+def get_folder_size(path_to_folder):
+    size = 0
+    for path, dirs, files in os.walk(path_to_folder):
+        for f in files:
+            fp = os.path.join(path, f)
+            size += os.path.getsize(fp)
+    return size
+
+
+def file_size_unit(size: int) -> str:
+    for unit in ("B", "K", "M", "G", "T"):
+        if size < 1024:
+            break
+        size /= 1024
+    return f"{size:.1f}{unit}"
+
+
 def check_folder():
     try:
+        upload_start_time = time.time()
         files_list = os.listdir(files_folder)
+        upload_start_size = get_folder_size(files_folder)
         if len(files_list) > 1:
             logging.info(f"Files in folder: {len(files_list)}")
         for file_to_upload in files_list:
@@ -191,6 +210,11 @@ def check_folder():
                     upload_data(file_type="locations", file_path=f"{files_folder}/locations.json")
                 if file_to_upload.endswith(".jpg"):
                     upload_data(file_type="image", file_path=f"{files_folder}/{file_to_upload}")
+        total_uploaded_file = len(files_list) - os.listdir(files_folder)
+        if len(files_list) - os.listdir(files_folder) > 0:
+            upload_end_size = file_size_unit(get_folder_size(files_folder) - upload_start_size)
+            upload_end_time = round(time.time() - upload_start_time, 2)
+            logging.info(f"{total_uploaded_file} files and {upload_end_size} uploaded in {upload_end_time} seconds")
         time.sleep(60)
     except:
         error_handling()
