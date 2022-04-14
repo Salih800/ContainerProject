@@ -102,7 +102,7 @@ def upload_data(file_type, file_path=None, file_data=None):
 
             if status_code == 200 and status == "success":
                 uploaded_file = result.json()["filename"]
-                logging.info(f"Image File uploaded: {file_name}\tUploaded File: {uploaded_file}")
+                logging.info(f"Image File uploaded: {file_name}")
                 write_json({"file_name": file_name, "uploaded_file": uploaded_file}, "uploaded_files.json")
                 # shutil.move(file_path, uploaded_folder)
                 file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
@@ -179,10 +179,10 @@ def upload_data(file_type, file_path=None, file_data=None):
 def check_folder():
     try:
         files_list = os.listdir(files_folder)
+        if len(files_list) > 1:
+            logging.info(f"Files in folder: {len(files_list)}")
         for file_to_upload in files_list:
             if connection:
-                if len(files_list) > 1:
-                    logging.info(f"Files in folder: {len(files_list)}")
                 if os.path.isfile(f"{files_folder}/uploaded_files.json"):
                     upload_data(file_type="uploaded_files", file_path=f"{files_folder}/uploaded_files.json")
                 if os.path.isfile(f"{files_folder}/uploaded_images.json"):
@@ -644,7 +644,7 @@ while True:
                     if connection:
                         threading.Thread(target=upload_data, name="location_upload", kwargs={"file_type": "location", "file_data": location_data}, daemon=True).start()
                     else:
-                        logging.warning("There is no connection. Saving location to file...")
+                        logging.info("There is no connection. Saving location to file...")
                         write_json(location_data, "locations.json")
 
                 if take_picture:
