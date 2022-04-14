@@ -495,6 +495,10 @@ def check_internet():
             if connection:
                 connection = False
                 logging.info("There is no Internet!")
+        except requests.exceptions.ReadTimeout:
+            if connection:
+                connection = False
+            logging.warning("Connection timeout in 10 seconds: ", url_check)
 
         except:
             if connection:
