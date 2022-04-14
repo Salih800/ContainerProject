@@ -489,7 +489,7 @@ def check_internet():
                     logging.info("Checking for updates...")
                     device_information = requests.get(device_informations, timeout=timeout_to_download).json()[hostname]
                     with open("config.json", "w") as config:
-                        config.write(device_information)
+                        json.dump(device_information, config)
                     device_type = device_information["device_type"]
                     code = requests.get(url_of_project + device_information["program"], timeout=timeout_to_download)
                     if code.status_code == 200:
