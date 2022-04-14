@@ -211,7 +211,7 @@ def check_folder():
                     upload_data(file_type="video", file_path=f"{files_folder}/{file_to_upload}")
         total_uploaded_file = len(files_list) - len(os.listdir(files_folder))
         if total_uploaded_file > 0:
-            upload_end_size = file_size_unit(get_folder_size(files_folder) - upload_start_size)
+            upload_end_size = file_size_unit(upload_start_size - get_folder_size(files_folder))
             upload_end_time = round(time.time() - upload_start_time, 2)
             logging.info(f"{total_uploaded_file} files and {upload_end_size} uploaded in {upload_end_time} seconds")
         time.sleep(60)
