@@ -448,14 +448,12 @@ def check_internet():
                 code_date = datetime.datetime.fromtimestamp(os.path.getmtime(destination))
                 logging.info(f"Running Code is up to date: {code_date}")
 
-            logging.info("Checking for internet...")
+            if time.time() - check_connection > 60:
+                check_connection = time.time()
+                logging.info("Checking for internet...")
             requests.get(url_check, timeout=timeout_to_download)
 
             connection = True
-
-            if time.time() - check_connection > 60:
-                check_connection = time.time()
-                logging.info("Internet Connected.")
 
             if connection:
                 if "check_folder" not in check_running_threads():
