@@ -193,7 +193,7 @@ def file_size_unit(size: int, elapsed_time):
         if size < 1024:
             break
         size /= 1024
-    return f"{size:.1f}{unit}", f"{size/elapsed_time:.1f}{unit}/s"
+    return f"{size:.1f}{unit}", f"{size/elapsed_time:.2f}{unit}/s"
 
 
 def check_folder():
