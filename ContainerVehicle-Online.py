@@ -455,9 +455,11 @@ def check_internet():
                 code_date = datetime.datetime.fromtimestamp(os.path.getmtime(destination))
                 logging.info(f"Running Code is up to date: {code_date}")
 
+            logging.info("Checking for internet...")
             requests.get(url_check, timeout=timeout_to_download)
 
             connection = True
+
             if time.time() - check_connection > 60:
                 check_connection = time.time()
                 logging.info("Internet Connected.")
@@ -525,17 +527,16 @@ def check_internet():
         except requests.exceptions.ConnectionError:
             if connection:
                 connection = False
-                logging.info("There is no Internet!")
+            logging.info("There is no Internet!")
         except requests.exceptions.ReadTimeout as timeout_error:
             if connection:
                 connection = False
-            logging.warning(f"Connection timeout in {timeout_to_download} seconds: {timeout_error}")
-
+            logging.warning(f"Download timeout in {timeout_to_download} seconds: {timeout_error}")
         except:
+            error_handling()
             if connection:
                 connection = False
                 logging.info("There is no connection!")
-            error_handling()
 
         time.sleep(10)
 
