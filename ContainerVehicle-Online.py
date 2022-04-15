@@ -265,7 +265,7 @@ def listen_to_server():
                 for command in messages:
                     if command == "start":
                         stream = True
-                        logging.info("Stream started.")
+                        logging.info("Start to stream command received.")
                         thread_list_folder = []
                         for thread_folder in threading.enumerate():
                             thread_list_folder.append(thread_folder.name)
@@ -276,11 +276,11 @@ def listen_to_server():
                     elif command == "stop":
                         stream = False
                         # threadKill = True
-                        logging.info("Stream stopped.")
+                        logging.info("Stop to stream command received.")
                     elif command == "k":
                         if not stream:
                             server.sendall(alive_msg)
-                        logging.info("Server is Online.")
+                        # logging.info("Server is Online.")
                     else:
                         logging.warning(f"Unknown message from server: {command}")
                         time.sleep(5)
