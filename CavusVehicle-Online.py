@@ -370,18 +370,6 @@ def capture():
                     bosluk = b"$"
                     message = bosluk + base64.b64encode(buffer) + bosluk
                     server.sendall(message)
-                except BrokenPipeError as broken_pipe:
-                    stream = False
-                    logging.error(f"BrokenPipeError! Stream stopping...: {broken_pipe}")
-                    time.sleep(5)
-                    continue
-
-                except ConnectionResetError:
-                    logging.warning("Connection closed. Waiting for connection...")
-                    stream = False
-                    time.sleep(5)
-                    continue
-
                 except:
                     error_handling()
                     stream = False
