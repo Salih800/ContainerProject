@@ -102,7 +102,7 @@ def upload_data(file_type, file_path=None, file_data=None):
 
             if status_code == 200 and status == "success":
                 uploaded_file = result.json()["filename"]
-                logging.info(f"Image File uploaded: {file_name}")
+                # logging.info(f"Image File uploaded: {file_name}")
                 # shutil.move(file_path, uploaded_folder)
                 file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
                 file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
@@ -585,12 +585,6 @@ frame_count = 0
 uploaded_folder = "uploaded_files"
 server_msg = "wait"
 pass_the_id = 0
-
-# try:
-#     subprocess.check_call(["ls", "/dev/ttyACM0"])
-#     gps_port = "/dev/ttyACM0"
-# except:
-#     gps_port = "/dev/ttyS0"
 
 try:
     hostname = subprocess.check_output(["hostname"]).decode("utf-8").strip("\n")
