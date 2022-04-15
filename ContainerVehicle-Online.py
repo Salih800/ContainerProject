@@ -586,11 +586,11 @@ uploaded_folder = "uploaded_files"
 server_msg = "wait"
 pass_the_id = 0
 
-try:
-    subprocess.check_call(["ls", "/dev/ttyACM0"])
-    gps_port = "/dev/ttyACM0"
-except:
-    gps_port = "/dev/ttyS0"
+# try:
+#     subprocess.check_call(["ls", "/dev/ttyACM0"])
+#     gps_port = "/dev/ttyACM0"
+# except:
+#     gps_port = "/dev/ttyS0"
 
 try:
     hostname = subprocess.check_output(["hostname"]).decode("utf-8").strip("\n")
@@ -606,8 +606,16 @@ try:
     values = json.loads(open('values.txt', 'r').read())
     garbageLocations = values['garbageLocations']
 
-    saved_config = json.loads(open('config.json', 'r').read())
-    device_type = saved_config["device_type"]
+    try:
+        device_information = requests.get(device_informations, timeout=20).json()[hostname]
+        device_type = device_information["device_type"]
+        gps_port = device_information["gps_port"]
+        with open("config.json", "w") as config:
+            json.dump(device_information, config)
+    except:
+        saved_config = json.loads(open('config.json', 'r').read())
+        device_type = saved_config["device_type"]
+        gps_port = saved_config["gps_port"]
 
 except:
     error_handling()
