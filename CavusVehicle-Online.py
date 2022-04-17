@@ -570,6 +570,7 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 frame_count = 0
 server_msg = "wait"
 old_location_gps = [0, 0]
+on_the_move = False
 
 if not os.path.isdir(files_folder):
     logger.info(f"Making {files_folder} folder")
@@ -653,6 +654,7 @@ while True:
                     saveLocationTime = time.time()
 
                     if geopy.distance.distance(location_gps, old_location_gps).meters > 5:
+                        on_the_move = True
                         location_data = {"date": date_local.strftime("%Y-%m-%d %H:%M:%S"), "lat": location_gps[0],
                                          "lng": location_gps[1], "speed": speed_in_kmh}
                         old_location_gps = location_gps
@@ -663,6 +665,8 @@ while True:
                         else:
                             logger.info("There is no connection. Saving location to file...")
                             write_json(location_data, "locations.json")
+                    else:
+                        on_the_move = False
 
                 if save_picture:
                     distance = geopy.distance.distance(location_gps, garbageLocation[:2]).meters
@@ -690,13 +694,16 @@ while True:
 
                     minDistance = min(distances)
 
-                    if geopy.distance.distance(location_gps, santiye_location).meters < 100:
-                        logger.info("Vehicle is in the station.")
-                        time.sleep(30)
-                    else:
+                    if on_the_move:
                         logger.info(
                             f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds'
                             f' and Minimum distance = {round(minDistance, 2)} meters')
+                    if not on_the_move:
+                        if geopy.distance.distance(location_gps, santiye_location).meters < 100:
+                            logger.info(f"Vehicle is in the station.")
+                            time.sleep(30)
+                        else:
+                            logger.info("The vehicle is steady.")
 
                 if minDistance >= 100 and not stream:
                     if "opencv" in check_running_threads():
