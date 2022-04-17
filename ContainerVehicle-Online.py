@@ -12,6 +12,7 @@ import threading
 import time
 
 hostname = subprocess.check_output(["hostname"]).decode("utf-8").strip("\n")
+requirements = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/requirements.txt"
 
 log_file_name = f"{hostname}.log"
 if os.path.isfile(log_file_name):
@@ -38,6 +39,11 @@ try:
 
 except ModuleNotFoundError as module:
     logger.warning("Module not found: ", module.name)
+    logger.info("Trying to install requirements.txt")
+    if subprocess.check_call(["pip", "install", "-r", requirements]) == 0:
+        logger.info("Modules installed")
+    else:
+        logger.warning("Module install failed!")
 
 
 def hash_check(file, blocksize=None):
@@ -85,7 +91,6 @@ def write_json(json_data, json_file_name='locations.json'):
 
 
 def upload_data(file_type, file_path=None, file_data=None):
-    global uploaded_folder
     timeout_to_upload = 60
     try:
         if file_type == "image":
@@ -100,7 +105,6 @@ def upload_data(file_type, file_path=None, file_data=None):
             if status_code == 200 and status == "success":
                 uploaded_file = result.json()["filename"]
                 # logger.info(f"Image File uploaded: {file_name}")
-                # shutil.move(file_path, uploaded_folder)
                 file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
                 file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
                 file_data = {"file_name": uploaded_file, "date": f"{file_date}", "lat": file_lat, "lng": file_lng, "id": file_id}
@@ -442,6 +446,7 @@ def check_internet():
     global garbageLocations
     global values
     global device_type
+    global device_information
 
     timeout_to_download = 20
 
@@ -556,56 +561,53 @@ url_check = "https://cdn.atiknakit.com/"
 url_upload = "https://api2.atiknakit.com/garbagedevice/"
 url_harddrive = "https://cdn.atiknakit.com/upload?type=garbagedevice"
 timeout = 10
-# picture_folder = "pictures/"
 connection = False
 check_connection = 0
 running_threads_check_time = 0
 santiye_location = [41.09892610381052, 28.780632617146328]
-device_type = None
 
 files_folder = "files"
 detectLocationDistance = 40
 threadKill = False
 filename = None
 save_picture = False
-hostname = "empty"
 id_number = None
 stream = False
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 frame_count = 0
-uploaded_folder = "uploaded_files"
 server_msg = "wait"
 pass_the_id = 0
 
+if not os.path.isdir(files_folder):
+    logger.info(f"Making {files_folder} folder")
+    os.mkdir(files_folder)
+
 try:
-    hostname = subprocess.check_output(["hostname"]).decode("utf-8").strip("\n")
+    device_information = requests.get(device_informations, timeout=20).json()[hostname]
+    device_type = device_information["device_type"]
+    gps_port = device_information["gps_port"]
+    with open("config.json", "w") as config:
+        json.dump(device_information, config)
+    logger.debug("Device Information taken from internet.")
+except:
+    device_information = json.loads(open('config.json', 'r').read())
+    device_type = device_information["device_type"]
+    gps_port = device_information["gps_port"]
+    logger.debug("Device Information taken from local")
 
-    if not os.path.isdir(files_folder):
-        logger.info(f"Making {files_folder} folder")
-        os.mkdir(files_folder)
-    if not os.path.isdir(uploaded_folder):
-        logger.info(f"Making {uploaded_folder} folder")
-        os.mkdir(uploaded_folder)
-
-    logger.info("Getting values from local...")
-    values = json.loads(open('values.txt', 'r').read())
+try:
+    values = requests.get(url_upload + hostname, timeout=20).json()
+    with open('values.txt', 'w') as jsonfile:
+        json.dump(values, jsonfile)
     garbageLocations = values['garbageLocations']
-
-    try:
-        device_information = requests.get(device_informations, timeout=20).json()[hostname]
-        device_type = device_information["device_type"]
-        gps_port = device_information["gps_port"]
-        with open("config.json", "w") as config:
-            json.dump(device_information, config)
-    except:
-        saved_config = json.loads(open('config.json', 'r').read())
-        device_type = saved_config["device_type"]
-        gps_port = saved_config["gps_port"]
+    logger.info("Values are taken from internet.")
 
 except:
-    error_handling()
+    values = json.loads(open('values.txt', 'r').read())
+    garbageLocations = values['garbageLocations']
+    logger.info("Values are taken from local.")
 
-logger.info(f"Hostname: {hostname}\tGPS Port: {gps_port}")
+logger.info(f"Hostname: {hostname}\tDevice Type: {device_type}\tGPS Port: {gps_port}")
 
 threading.Thread(target=check_internet, name="check_internet", daemon=True).start()
 
