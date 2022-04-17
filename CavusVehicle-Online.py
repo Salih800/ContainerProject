@@ -493,23 +493,23 @@ def check_internet():
                     logger.info("Values saved to Local.")
                     logger.info(f'Count of Garbage Locations: {len(garbageLocations)}')
 
-                    log_size = os.path.getsize("project.log") / (1024 * 1024)
+                    log_size = os.path.getsize(log_file_name) / (1024 * 1024)
                     if log_size > 1:
                         log_date = datetime.datetime.now().strftime("%Y-%m-%d")
                         log_time = datetime.datetime.now().strftime("%H-%M-%S")
-                        log_file_name = f"{log_date}_{log_time}_{hostname}.log"
-                        logger.info(f"Trying to upload {log_file_name}...")
-                        shutil.copy("project.log", log_file_name)
+                        log_file_upload = f"{log_date}_{log_time}_{hostname}.log"
+                        logger.info(f"Trying to upload {log_file_upload}...")
+                        shutil.copy(log_file_name, log_file_upload)
                         rclone_log = subprocess.check_call(
-                            ["rclone", "move", log_file_name,
+                            ["rclone", "move", log_file_upload,
                              f"gdrive:Python/ContainerFiles/{log_date}/{hostname}/logs/"])
-                        if not os.path.isfile(log_file_name):
-                            with open('project.log', 'r+') as file:
+                        if not os.path.isfile(log_file_upload):
+                            with open(log_file_name, 'r+') as file:
                                 file.truncate()
-                            logger.info(f"{log_file_name} uploaded to gdrive.")
-                        if os.path.isfile(log_file_name):
-                            logger.warning(f"{log_file_name} log file couldn't uploaded! Rclone Status: {rclone_log}")
-                            os.remove(log_file_name)
+                            logger.info(f"{log_file_upload} uploaded to gdrive.")
+                        if os.path.isfile(log_file_upload):
+                            logger.warning(f"{log_file_upload} log file couldn't uploaded! Rclone Status: {rclone_log}")
+                            os.remove(log_file_upload)
 
                     pTimeCheck = time.time()
 
