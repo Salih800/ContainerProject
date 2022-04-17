@@ -689,9 +689,14 @@ while True:
                             break
 
                     minDistance = min(distances)
-                    logger.info(f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds and Minimum distance = {round(minDistance, 2)} meters')
+
                     if geopy.distance.distance(location_gps, santiye_location).meters < 100:
+                        logger.info("Vehicle is in the station.")
                         time.sleep(30)
+                    else:
+                        logger.info(
+                            f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds'
+                            f' and Minimum distance = {round(minDistance, 2)} meters')
 
                 if minDistance >= 100 and not stream:
                     if "opencv" in check_running_threads():
