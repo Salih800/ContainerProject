@@ -660,7 +660,7 @@ while True:
                 if time.time() - saveLocationTime > 5:
                     saveLocationTime = time.time()
 
-                    if geopy.distance.distance(location_gps, old_location_gps).meters > 5:
+                    if geopy.distance.distance(location_gps, old_location_gps).meters > 10:
                         on_the_move = True
                         location_data = {"date": date_local.strftime("%Y-%m-%d %H:%M:%S"), "lat": location_gps[0],
                                          "lng": location_gps[1], "speed": speed_in_kmh}
