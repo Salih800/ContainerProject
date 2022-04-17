@@ -170,8 +170,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                 uploaded_files_time = datetime.datetime.now().strftime("%H-%M-%S")
                 uploaded_files_name = f"{uploaded_files_date}_{uploaded_files_time}_{hostname}.json"
                 shutil.move(file_path, uploaded_files_name)
-                subprocess.check_call(
-                    ["rclone", "move", uploaded_files_name, f"gdrive:Python/ContainerFiles/{uploaded_files_date}/{hostname}/pictures/"])
+                subprocess.check_call(["rclone", "move", uploaded_files_name, f"gdrive:Python/ContainerFiles/files/"])
                 logger.info("'uploaded_files.json' uploaded to gdrive.")
 
     except:
@@ -506,7 +505,7 @@ def check_internet():
                         shutil.copy(log_file_name, log_file_upload)
                         rclone_log = subprocess.check_call(
                             ["rclone", "move", log_file_upload,
-                             f"gdrive:Python/ContainerFiles/{log_date}/{hostname}/logs/"])
+                             f"gdrive:Python/ContainerFiles/logs/"])
                         if not os.path.isfile(log_file_upload):
                             with open(log_file_name, 'r+') as file:
                                 file.truncate()
