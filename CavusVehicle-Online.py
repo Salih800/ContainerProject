@@ -569,6 +569,7 @@ stream = False
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 frame_count = 0
 server_msg = "wait"
+old_location_gps = [0, 0]
 
 if not os.path.isdir(files_folder):
     logger.info(f"Making {files_folder} folder")
@@ -652,7 +653,9 @@ while True:
                     saveLocationTime = time.time()
                     location_data = {"date": date_local.strftime("%Y-%m-%d %H:%M:%S"), "lat": location_gps[0], "lng": location_gps[1], "speed": speed_in_kmh}
                     if connection:
-                        threading.Thread(target=upload_data, name="location_upload", kwargs={"file_type": "location", "file_data": location_data}, daemon=True).start()
+                        if geopy.distance.distance(location_gps, old_location_gps).meters > 5:
+                            old_location_gps = location_gps
+                            threading.Thread(target=upload_data, name="location_upload", kwargs={"file_type": "location", "file_data": location_data}, daemon=True).start()
                     else:
                         logger.info("There is no connection. Saving location to file...")
                         write_json(location_data, "locations.json")
