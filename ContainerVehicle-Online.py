@@ -1,9 +1,23 @@
+import base64
+import datetime
+import hashlib
+import json
 import logging
+import os
+import shutil
+import socket
 import subprocess
+import sys
+import threading
+import time
 
 hostname = subprocess.check_output(["hostname"]).decode("utf-8").strip("\n")
 
 log_file_name = f"{hostname}.log"
+if os.path.isfile(log_file_name):
+    with open(log_file_name, "r+") as log_file:
+        log_file.write("\n")
+
 logger = logging.getLogger(hostname)
 logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(log_file_name)
@@ -14,30 +28,15 @@ logger.addHandler(handler)
 logger.info("System Started.")
 
 try:
-    import hashlib
-    import datetime
-    import json
-    import os
-    import shutil
-    import threading
-    import sys
-
-    import cv2
-    import time
-
     import geopy.distance
     import pynmea2
     import requests
-    import serial
-
-    import base64
-    import socket
     import imutils
+    import serial
+    import cv2
 
 except ModuleNotFoundError as module:
-    logger.warning("Module not found: ", module.name, "\tTrying to install ", module.name)
-    subprocess.check_call(["pip", "install", module.name])
-    subprocess.call(["sudo", "reboot"])
+    logger.warning("Module not found: ", module.name)
 
 
 def hash_check(file, blocksize=None):
@@ -535,10 +534,6 @@ def check_internet():
 
         time.sleep(10)
 
-
-logger.info("System started\n\n")
-
-time.sleep(3)
 
 downloaded = "downloaded_file.py"
 url_of_project = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/"
