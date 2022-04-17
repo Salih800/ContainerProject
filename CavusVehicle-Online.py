@@ -25,6 +25,7 @@ fmt = logging.Formatter('%(asctime)s %(levelname)-8s: %(message)s')
 handler.setFormatter(fmt)
 logger.addHandler(handler)
 
+logger.debug("")
 logger.info("System Started.")
 
 try:
