@@ -39,6 +39,7 @@ try:
 
 except ModuleNotFoundError as module:
     logger.warning("Module not found: ", module.name)
+    time.sleep(30)
     logger.info("Trying to install requirements.txt")
     if subprocess.check_call(["pip", "install", "-r", requirements]) == 0:
         logger.info("Modules installed")
