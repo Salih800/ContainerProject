@@ -651,14 +651,18 @@ while True:
 
                 if time.time() - saveLocationTime > 5:
                     saveLocationTime = time.time()
-                    location_data = {"date": date_local.strftime("%Y-%m-%d %H:%M:%S"), "lat": location_gps[0], "lng": location_gps[1], "speed": speed_in_kmh}
-                    if connection:
-                        if geopy.distance.distance(location_gps, old_location_gps).meters > 5:
-                            old_location_gps = location_gps
-                            threading.Thread(target=upload_data, name="location_upload", kwargs={"file_type": "location", "file_data": location_data}, daemon=True).start()
-                    else:
-                        logger.info("There is no connection. Saving location to file...")
-                        write_json(location_data, "locations.json")
+
+                    if geopy.distance.distance(location_gps, old_location_gps).meters > 5:
+                        location_data = {"date": date_local.strftime("%Y-%m-%d %H:%M:%S"), "lat": location_gps[0],
+                                         "lng": location_gps[1], "speed": speed_in_kmh}
+                        old_location_gps = location_gps
+                        if connection:
+                            threading.Thread(target=upload_data, name="location_upload",
+                                             kwargs={"file_type": "location", "file_data": location_data},
+                                             daemon=True).start()
+                        else:
+                            logger.info("There is no connection. Saving location to file...")
+                            write_json(location_data, "locations.json")
 
                 if save_picture:
                     distance = geopy.distance.distance(location_gps, garbageLocation[:2]).meters
