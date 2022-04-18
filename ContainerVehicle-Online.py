@@ -141,7 +141,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                     logger.debug(f"Detection Time: {round((time.time() - detection_start_time), 2)} and count: {detection_count}")
                     for i in range(detection_count):
                         result_dict = {}
-                        for value in values:
+                        for value in detect_values:
                             if value == "confidence":
                                 result_dict[value] = detection_result.pandas().xyxy[0][value][i]
                             elif value == "name":
