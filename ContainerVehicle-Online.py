@@ -38,6 +38,7 @@ try:
     import serial
     import cv2
     import torch
+    from cv2 import imwrite as my_imwrite
 
 except ModuleNotFoundError as module:
     logger.warning("Module not found: ", module.name)
@@ -443,7 +444,7 @@ def capture(camera_mode):
                 image_file_path = f'{recorded_files}/{filename}.{image_type}'
                 save_picture = False
                 logger.info(f'Taking picture...')
-                cv2.imwrite(image_file_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 50])
+                my_imwrite(image_file_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 50])
 
                 if os.path.isfile(image_file_path):
                     file_size = round(os.path.getsize(image_file_path) / 1024, 2)
