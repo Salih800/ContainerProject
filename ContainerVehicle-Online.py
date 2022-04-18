@@ -129,9 +129,9 @@ def upload_data(file_type, file_path=None, file_data=None):
                             logger.info(f"{yolov5_reqs} updated.")
                         else:
                             logger.warning(f"{yolov5_reqs} update failed with {yolov5_reqs_update}")
-                        model_load_time = time.time()
-                        model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_name)
-                        logger.info(f"Model loaded in {round(time.time() - model_load_time, 2)} seconds.")
+                    model_load_time = time.time()
+                    model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_name)
+                    logger.info(f"Model loaded in {round(time.time() - model_load_time, 2)} seconds.")
                 if model is not None:
                     detection_start_time = time.time()
                     detection_result = model(file_path, model_size)
