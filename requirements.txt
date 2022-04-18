@@ -5,3 +5,4 @@ pynmea2>=1.18.0
 pyserial>=3.5
 requests>=2.27.1
 imutils>=0.5.4
+torch
