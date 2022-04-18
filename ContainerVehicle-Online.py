@@ -97,6 +97,7 @@ def upload_data(file_type, file_path=None, file_data=None):
     timeout_to_upload = 60
     detect_values = ["name", "class", "confidence", "xmin", "ymin", "xmax", "ymax"]
     global model
+    model_size = device_information["detection_model"]["size"]
     try:
         if file_type == "image":
             detection_count = 0
