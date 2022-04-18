@@ -13,6 +13,7 @@ import time
 
 hostname = subprocess.check_output(["hostname"]).decode("utf-8").strip("\n")
 requirements = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/requirements.txt"
+yolov5_reqs = "https://raw.githubusercontent.com/ultralytics/yolov5/master/requirements.txt"
 
 log_file_name = f"{hostname}.log"
 if os.path.isfile(log_file_name):
@@ -36,6 +37,7 @@ try:
     import imutils
     import serial
     import cv2
+    import torch
 
 except ModuleNotFoundError as module:
     logger.warning("Module not found: ", module.name)
@@ -93,8 +95,12 @@ def write_json(json_data, json_file_name='locations.json'):
 
 def upload_data(file_type, file_path=None, file_data=None):
     timeout_to_upload = 60
+    detect_values = ["name", "class", "confidence", "xmin", "ymin", "xmax", "ymax"]
+    global model
     try:
         if file_type == "image":
+            detection_count = 0
+            result_list = []
             file_name = os.path.basename(file_path)
             with open(file_path, 'rb') as img:
                 files = {'file': (file_name, img, 'multipart/form-data', {'Expires': '0'})}
@@ -104,14 +110,53 @@ def upload_data(file_type, file_path=None, file_data=None):
                 status = result.json()["status"]
 
             if status_code == 200 and status == "success":
+                if model is None:
+                    model_name = device_information["detection_model"]["name"]
+                    model_size = device_information["detection_model"]["size"]
+
+                    if not os.path.isfile(model_name):
+                        logger.warning(f"{model_name} couldn't found. Trying to download from Github...")
+                        model_file = requests.get(model_link + model_name)
+                        if model_file.status_code == 200:
+                            with open(model_name, "wb") as model_save:
+                                model_save.write(model_file.content)
+                            logger.info(f"{model_name} downloaded and saved.")
+                        else:
+                            logger.warning(f"{model_name} couldn't downloaded. Request Error: {model_file.status_code}")
+                        logger.info(f"Updating {yolov5_reqs}...")
+                        yolov5_reqs_update = subprocess.check_call(["pip", "install", "-r", yolov5_reqs]) == 0
+                        if yolov5_reqs_update == 0:
+                            logger.info(f"{yolov5_reqs} updated.")
+                        else:
+                            logger.warning(f"{yolov5_reqs} update failed with {yolov5_reqs_update}")
+                        model_load_time = time.time()
+                        model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_name)
+                        logger.info(f"Model loaded in {round(time.time() - model_load_time, 2)} seconds.")
+                if model is not None:
+                    detection_start_time = time.time()
+                    result = model(file_path, model_size)
+                    detection_count = len(result.pandas().xyxy[0]["name"])
+                    logger.debug(f"Detection Time: {round((time.time() - detection_start_time), 2)} and count: {detection_count}")
+                    for i in range(detection_count):
+                        result_dict = {}
+                        for value in values:
+                            if value == "confidence":
+                                result_dict[value] = result.pandas().xyxy[0][value][i]
+                            elif value == "name":
+                                result_dict[value] = "Taken" if result.pandas().xyxy[0][value][i] == "Alındı" else "empty"
+                            else:
+                                result_dict[value] = int(result.pandas().xyxy[0][value][i])
+                        result_list.append(result_dict)
+
                 uploaded_file = result.json()["filename"]
-                # logger.info(f"Image File uploaded: {file_name}")
                 file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
                 file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
-                file_data = {"file_name": uploaded_file, "date": f"{file_date}", "lat": file_lat, "lng": file_lng, "id": file_id}
+                file_data = {"file_name": uploaded_file, "date": f"{file_date}", "lat": file_lat,
+                             "lng": file_lng, "id": file_id, "detection": detection_count}
 
                 my_file_data = {"device_name": hostname, "device_type": device_type, "file_id": uploaded_file,
-                                "date": f"{file_date}", "lat": file_lat, "lng": file_lng, "location_id": file_id}
+                                "date": f"{file_date}", "lat": file_lat, "lng": file_lng, "location_id": file_id,
+                                "detection_count": detection_count, "result_list": result_list}
                 write_json(my_file_data, "uploaded_files.json")
 
                 try:
@@ -544,6 +589,7 @@ def check_internet():
 downloaded = "downloaded_file.py"
 url_of_project = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/"
 device_informations = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/device_informations.json"
+model_link = "https://github.com/Salih800/ContainerProject/raw/main/models/"
 destination = os.path.basename(__file__)
 data_type = str
 reader = pynmea2.NMEAStreamReader()
@@ -578,6 +624,7 @@ frame_count = 0
 server_msg = "wait"
 pass_the_id = 0
 old_location_gps = [0, 0]
+model = None
 
 if not os.path.isdir(files_folder):
     logger.info(f"Making {files_folder} folder")
