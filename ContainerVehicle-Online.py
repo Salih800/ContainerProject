@@ -125,7 +125,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                             logger.warning(f"{model_name} couldn't downloaded. Request Error: {model_file.status_code}")
                         logger.info(f"Updating {yolov5_reqs}...")
                         yolov5_reqs_update = subprocess.check_call(["pip", "install", "-r", yolov5_reqs]) == 0
-                        if yolov5_reqs_update == 0:
+                        if yolov5_reqs_update == True:
                             logger.info(f"{yolov5_reqs} updated.")
                         else:
                             logger.warning(f"{yolov5_reqs} update failed with {yolov5_reqs_update}")
@@ -134,18 +134,18 @@ def upload_data(file_type, file_path=None, file_data=None):
                         logger.info(f"Model loaded in {round(time.time() - model_load_time, 2)} seconds.")
                 if model is not None:
                     detection_start_time = time.time()
-                    result = model(file_path, model_size)
-                    detection_count = len(result.pandas().xyxy[0]["name"])
+                    detection_result = model(file_path, model_size)
+                    detection_count = len(detection_result.pandas().xyxy[0]["name"])
                     logger.debug(f"Detection Time: {round((time.time() - detection_start_time), 2)} and count: {detection_count}")
                     for i in range(detection_count):
                         result_dict = {}
                         for value in values:
                             if value == "confidence":
-                                result_dict[value] = result.pandas().xyxy[0][value][i]
+                                result_dict[value] = detection_result.pandas().xyxy[0][value][i]
                             elif value == "name":
-                                result_dict[value] = "Taken" if result.pandas().xyxy[0][value][i] == "Alındı" else "empty"
+                                result_dict[value] = "Taken" if detection_result.pandas().xyxy[0][value][i] == "Alındı" else "empty"
                             else:
-                                result_dict[value] = int(result.pandas().xyxy[0][value][i])
+                                result_dict[value] = int(detection_result.pandas().xyxy[0][value][i])
                         result_list.append(result_dict)
 
                 uploaded_file = result.json()["filename"]
