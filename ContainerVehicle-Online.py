@@ -418,9 +418,9 @@ def listen_to_me():
                         stream = False
                         logger.info("Stop to stream command received.")
                     elif command == "k":
-                        if not stream:
-                            server.sendall(alive_msg)
-                        # logger.info("Server is Online.")
+                        # if not stream:
+                        server.sendall(alive_msg)
+                        logger.info("ME is Online.")
                     else:
                         logger.warning(f"Unknown message from ME: {command}")
                         time.sleep(5)
