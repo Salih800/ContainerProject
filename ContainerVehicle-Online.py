@@ -365,6 +365,92 @@ def listen_to_server():
         time.sleep(5)
 
 
+def listen_to_me():
+    global connection, stream
+    host = "proxy73.rt3.io"
+    port = 30155
+    buff_size = 127
+    alive_msg = b"$k$"
+
+    try:
+        stream = False
+        logger.info("Trying to connect to ME")
+        my_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_address = (host, port)
+        my_server.connect(server_address)
+        my_server.settimeout(60)
+        id_message = bytes("$id" + hostname + "$", "utf-8")
+        my_server.sendall(id_message)
+        logger.info(f"Id message sent to ME: {id_message}")
+        my_server.sendall(alive_msg)
+        while True:
+            logger.info("Listening ME...")
+            my_server_msg = server.recv(buff_size)
+            if my_server_msg != b"":
+                data_orig = my_server_msg.decode("utf-8")
+                merge_msg = False
+                messages = []
+                new_msg = ""
+                for d in data_orig:
+                    if d == "$":
+                        if not merge_msg:
+                            merge_msg = True
+                            continue
+                        else:
+                            merge_msg = False
+                            messages.append(new_msg)
+                            new_msg = ""
+                    if merge_msg:
+                        new_msg += d
+
+                for command in messages:
+                    if command == "start":
+                        stream = True
+                        logger.info("Start to stream command received.")
+                        thread_list_folder = []
+                        for thread_folder in threading.enumerate():
+                            thread_list_folder.append(thread_folder.name)
+                        if "opencv" not in thread_list_folder:
+                            logger.info("Starting OpenCV")
+                            threading.Thread(target=capture, name="opencv", args=("stream",), daemon=True).start()
+
+                    elif command == "stop":
+                        stream = False
+                        logger.info("Stop to stream command received.")
+                    elif command == "k":
+                        if not stream:
+                            server.sendall(alive_msg)
+                        # logger.info("Server is Online.")
+                    else:
+                        logger.warning(f"Unknown message from ME: {command}")
+                        time.sleep(5)
+            else:
+                logger.error(f"Empty byte from ME. Closing the connection!: ME Message: {server_msg}")
+                server.close()
+                break
+
+    except socket.timeout:
+        logger.warning("ME timeout in 60 seconds! Closing the connection.")
+        stream = False
+        time.sleep(5)
+    except ConnectionRefusedError as cre:
+        logger.warning("ME Connection Refused! Probably server is not online..: ", cre)
+        stream = False
+        time.sleep(5)
+    except ConnectionAbortedError as cae:
+        logger.warning("ME Connection closed by Client!: ", cae)
+        stream = False
+        time.sleep(5)
+    except ConnectionResetError as cse:
+        logger.warning("ME Connection closed by server!: ", cse)
+        stream = False
+        time.sleep(5)
+    except:
+        error_handling()
+        stream = False
+        time.sleep(5)
+
+
 def capture(camera_mode):
     try:
         recorded_files = "recorded"
@@ -524,6 +610,9 @@ def check_internet():
                 if "listen_to_server" not in check_running_threads():
                     logger.info("Streaming Thread is starting...")
                     threading.Thread(target=listen_to_server, name="listen_to_server", daemon=True).start()
+                if "listen_to_me" not in check_running_threads():
+                    logger.info("listen_to_me Thread is starting...")
+                    threading.Thread(target=listen_to_me, name="listen_to_me", daemon=True).start()
                 if time.time() - pTimeCheck > 7200:
                     pTimeCheck = time.time() - 7080
 
