@@ -219,9 +219,14 @@ def upload_data(file_type, file_path=None, file_data=None):
                 uploaded_files_date = datetime.datetime.now().strftime("%Y-%m-%d")
                 uploaded_files_time = datetime.datetime.now().strftime("%H-%M-%S")
                 uploaded_files_name = f"{uploaded_files_date}_{uploaded_files_time}_{hostname}.json"
-                shutil.move(file_path, uploaded_files_name)
-                subprocess.check_call(["rclone", "move", uploaded_files_name, f"gdrive:Python/ContainerFiles/files/"])
-                logger.info("'uploaded_files.json' uploaded to gdrive.")
+                shutil.copy(file_path, uploaded_files_name)
+                rclone_call = subprocess.check_call(["rclone", "move", uploaded_files_name, f"gdrive:Python/ContainerFiles/files/"])
+                if os.path.isfile(uploaded_files_name):
+                    os.remove(uploaded_files_name)
+                    logger.info(f"Rclone failed with {rclone_call}")
+                else:
+                    logger.info(f"'uploaded_files.json' uploaded to gdrive. Rclone returned: {rclone_call}")
+                    os.remove(file_path)
 
     except:
         error_handling()
