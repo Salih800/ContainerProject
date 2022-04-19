@@ -348,15 +348,15 @@ def listen_to_server():
         stream = False
         time.sleep(5)
     except ConnectionRefusedError as cre:
-        logger.warning("Connection Refused! Probably server is not online..: ", cre)
+        logger.warning(f"Connection Refused! Probably server is not online..: {cre}")
         stream = False
         time.sleep(5)
     except ConnectionAbortedError as cae:
-        logger.warning("Connection closed by Client!: ", cae)
+        logger.warning(f"Connection closed by Client!: {cae}")
         stream = False
         time.sleep(5)
     except ConnectionResetError as cse:
-        logger.warning("Connection closed by server!: ", cse)
+        logger.warning(f"Connection closed by server!: {cse}")
         stream = False
         time.sleep(5)
     except:
@@ -366,14 +366,15 @@ def listen_to_server():
 
 
 def listen_to_me():
-    global connection, stream
+    global connection
+
     host = "proxy73.rt3.io"
     port = 30155
     buff_size = 127
     alive_msg = b"$k$"
 
     try:
-        stream = False
+        # stream = False
         logger.info("Trying to connect to ME")
         my_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_address = (host, port)
@@ -406,7 +407,7 @@ def listen_to_me():
 
                 for command in messages:
                     if command == "start":
-                        stream = True
+                        # stream = True
                         logger.info("Start to stream command received.")
                         thread_list_folder = []
                         for thread_folder in threading.enumerate():
@@ -416,7 +417,7 @@ def listen_to_me():
                             threading.Thread(target=capture, name="opencv", args=("stream",), daemon=True).start()
 
                     elif command == "stop":
-                        stream = False
+                        # stream = False
                         logger.info("Stop to stream command received.")
                     elif command == "k":
                         # if not stream:
@@ -432,23 +433,23 @@ def listen_to_me():
 
     except socket.timeout:
         logger.warning("ME timeout in 60 seconds! Closing the connection.")
-        stream = False
+        # stream = False
         time.sleep(5)
     except ConnectionRefusedError as cre:
-        logger.warning("ME Connection Refused! Probably server is not online..: ", cre)
-        stream = False
+        logger.warning(f"ME Connection Refused! Probably server is not online..: {cre}")
+        # stream = False
         time.sleep(5)
     except ConnectionAbortedError as cae:
-        logger.warning("ME Connection closed by Client!: ", cae)
-        stream = False
+        logger.warning(f"ME Connection closed by Client!: {cae}")
+        # stream = False
         time.sleep(5)
     except ConnectionResetError as cse:
-        logger.warning("ME Connection closed by server!: ", cse)
-        stream = False
+        logger.warning(f"ME Connection closed by server!: {cse}")
+        # stream = False
         time.sleep(5)
     except:
         error_handling()
-        stream = False
+        # stream = False
         time.sleep(5)
 
 
