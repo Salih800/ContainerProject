@@ -420,14 +420,14 @@ def listen_to_me():
                         logger.info("Stop to stream command received.")
                     elif command == "k":
                         # if not stream:
-                        server.sendall(alive_msg)
+                        my_server.sendall(alive_msg)
                         logger.info("ME is Online.")
                     else:
                         logger.warning(f"Unknown message from ME: {command}")
                         time.sleep(5)
             else:
-                logger.error(f"Empty byte from ME. Closing the connection!: ME Message: {server_msg}")
-                server.close()
+                logger.error(f"Empty byte from ME. Closing the connection!: ME Message: {my_server_msg}")
+                my_server.close()
                 break
 
     except socket.timeout:
