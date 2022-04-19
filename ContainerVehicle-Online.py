@@ -379,6 +379,7 @@ def listen_to_me():
         server_address = (host, port)
         my_server.connect(server_address)
         my_server.settimeout(60)
+        logger.info(f"Connected at {my_server.getsockname()}.")
         id_message = bytes("$id" + hostname + "$", "utf-8")
         my_server.sendall(id_message)
         logger.info(f"Id message sent to ME: {id_message}")
