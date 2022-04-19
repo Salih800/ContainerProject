@@ -386,7 +386,7 @@ def listen_to_me():
         my_server.sendall(alive_msg)
         while True:
             logger.info("Listening ME...")
-            my_server_msg = server.recv(buff_size)
+            my_server_msg = my_server.recv(buff_size)
             if my_server_msg != b"":
                 data_orig = my_server_msg.decode("utf-8")
                 merge_msg = False
