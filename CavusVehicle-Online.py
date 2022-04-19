@@ -167,6 +167,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                 logger.warning(f"uploaded_videos.json upload warning: {result.status_code}")
         elif file_type == "uploaded_files":
             if os.path.getsize(file_path) / 1024 > 500:
+                logger.info(f"Trying to upload {file_path}")
                 uploaded_files_date = datetime.datetime.now().strftime("%Y-%m-%d")
                 uploaded_files_time = datetime.datetime.now().strftime("%H-%M-%S")
                 uploaded_files_name = f"{uploaded_files_date}_{uploaded_files_time}_{hostname}.json"
@@ -175,7 +176,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                     ["rclone", "move", uploaded_files_name, f"gdrive:Python/ContainerFiles/files/"])
                 if os.path.isfile(uploaded_files_name):
                     os.remove(uploaded_files_name)
-                    logger.info(f"Rclone failed with {rclone_call}")
+                    logger.warning(f"Rclone failed with {rclone_call}")
                 else:
                     logger.info(f"'uploaded_files.json' uploaded to gdrive. Rclone returned: {rclone_call}")
                     os.remove(file_path)
