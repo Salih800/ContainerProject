@@ -419,7 +419,7 @@ def listen_to_me():
                         #     command_out_stderr = b"$" + command_out.stderr.read() + b"$"
                         #     my_server.sendall(command_out_stderr)
                         command_out_stderr = command_out.stderr.read()
-                        if command_out_stderr != b'':
+                        if command_out_stderr == b'':
                             my_server.sendall(b"$ok$")
                         else:
                             my_server.sendall(b"$error$")
