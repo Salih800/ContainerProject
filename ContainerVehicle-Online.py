@@ -420,10 +420,10 @@ def listen_to_me():
                         #     command_out_stderr = b"$" + command_out.stderr.read() + b"$"
                         #     my_server.sendall(command_out_stderr)
                         for line in io.TextIOWrapper(command_out.stdout, encoding="utf-8"):
-                            line = b"$" + bytes(line) + b"$"
+                            line = b"$" + bytes(line, "utf-8") + b"$"
                             my_server.sendall(line)
                         for line in io.TextIOWrapper(command_out.stderr, encoding="utf-8"):
-                            line = b"$" + bytes(line) + b"$"
+                            line = b"$" + bytes(line, "utf-8") + b"$"
                             my_server.sendall(line)
 
 
