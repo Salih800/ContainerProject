@@ -877,9 +877,11 @@ while True:
                         # logger.warning(subprocess.call(["ls", "/dev/video0"]))
                         time.sleep(1)
                 else:
-                    logger.warning(f"save_picture was {save_picture}")
+                    is_camera = subprocess.call(["ls", "/dev/video0"])
+                    logger.warning(f"save_picture was {save_picture}: {is_camera}")
                     take_picture = False
-                    logger.warning(subprocess.call(["ls", "/dev/video0"]))
+                    if is_camera == 2:
+                        restart_system()
 
                 if minDistance >= 100 and not stream:
                     if "opencv" in check_running_threads():
