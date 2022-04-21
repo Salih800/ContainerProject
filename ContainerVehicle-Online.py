@@ -144,7 +144,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                     detection_start_time = time.time()
                     detection_result = model(file_path, model_size)
                     detection_count = len(detection_result.pandas().xyxy[0]["name"])
-                    logger.debug(f"Detection Time: {round((time.time() - detection_start_time), 2)} and count: {detection_count}")
+                    # logger.info(f"Detection Time: {round((time.time() - detection_start_time), 2)} and count: {detection_count}")
                     for i in range(detection_count):
                         result_dict = {}
                         for value in detect_values:
@@ -747,12 +747,12 @@ try:
     gps_port = device_information["gps_port"]
     with open("config.json", "w") as config:
         json.dump(device_information, config)
-    logger.debug("Device Information taken from internet.")
+    logger.info("Device Information taken from internet.")
 except:
     device_information = json.loads(open('config.json', 'r').read())
     device_type = device_information["device_type"]
     gps_port = device_information["gps_port"]
-    logger.debug("Device Information taken from local")
+    logger.info("Device Information taken from local")
 
 try:
     values = requests.get(url_upload + hostname, timeout=20).json()
@@ -873,16 +873,16 @@ while True:
                 if not save_picture:
                     if take_picture and speed_in_kmh < 5.0:
                         logger.info(
-                            f'Distance Detection Interval: {detectLocationDistance}\tDistance: {round(distance, 2)} meters')
+                            f'Distance: {round(distance, 2)} meters')
                         photo_date = date_local.strftime('%Y-%m-%d__%H-%M-%S,,')
                         filename = f'{photo_date}{location_gps[0]},{location_gps[1]},{id_number}'
 
                         save_picture = True
-                        # logger.warning(subprocess.call(["ls", "/dev/video0"]))
                         time.sleep(1)
                 else:
                     is_camera = subprocess.call(["ls", "/dev/video0"])
                     take_picture = False
+                    save_picture = False
                     if is_camera == 2:
                         restart_system("error", f"save_picture was {save_picture}: {is_camera}")
 
