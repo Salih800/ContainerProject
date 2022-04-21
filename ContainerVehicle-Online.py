@@ -72,8 +72,13 @@ def error_handling():
     logger.error(f"Type: {exception_type}\tObject: {exception_object}\tLine number: {line_number}")
 
 
-def restart_system():
-    logger.info("Restarting the system")
+def restart_system(restart_type=None, why=None):
+    if restart_type == "info":
+        logger.info(f"Restarting the system: {why}")
+    if restart_type == "warning":
+        logger.warning(f"Restarting the system: {why}")
+    if restart_type == "error":
+        logger.error(f"Restarting the system: {why}")
     subprocess.call(["sudo", "reboot"])
     sys.exit("Rebooting...")
 
@@ -503,8 +508,7 @@ def capture(camera_mode):
         while True:
             ret, img = cap.read()
             if not ret:
-                logger.error(f"ret was {ret}: ", subprocess.check_call(["ls", "/dev/video0"]))
-                restart_system()
+                restart_system("warning", f"ret was {ret}: {subprocess.check_call(['ls', '/dev/video0'])}")
 
             if stream:
                 try:
@@ -640,7 +644,7 @@ def check_internet():
                             logger.info("New update found! Changing the code...")
                             shutil.move(downloaded, destination)
                             logger.info("Code change completed.")
-                            restart_system()
+                            restart_system("info", "Updating the code...")
                         else:
                             logger.info("No update found!")
 
@@ -878,10 +882,9 @@ while True:
                         time.sleep(1)
                 else:
                     is_camera = subprocess.call(["ls", "/dev/video0"])
-                    logger.warning(f"save_picture was {save_picture}: {is_camera}")
                     take_picture = False
                     if is_camera == 2:
-                        restart_system()
+                        restart_system("error", f"save_picture was {save_picture}: {is_camera}")
 
                 if minDistance >= 100 and not stream:
                     if "opencv" in check_running_threads():
