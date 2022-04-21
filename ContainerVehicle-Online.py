@@ -1,5 +1,6 @@
 import base64
 import datetime
+import glob
 import hashlib
 import io
 import json
@@ -472,6 +473,9 @@ def capture(camera_mode):
         image_type = "jpg"
         if not os.path.isdir(recorded_files):
             os.mkdir(recorded_files)
+        else:
+            for old_file in glob.glob(recorded_files + "/*.jpg"):
+                shutil.move(old_file, files_folder)
 
         logger.info(f"Trying to open camera in {camera_mode} mode...")
         old_time = time.time()
@@ -497,6 +501,8 @@ def capture(camera_mode):
         global pass_the_id
         global take_picture
 
+        saved_pictures_count = 0
+        saved_pictures_size = 0
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.7
         thickness = 2
@@ -553,12 +559,14 @@ def capture(camera_mode):
                 my_imwrite(image_file_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 50])
 
                 if os.path.isfile(image_file_path):
-                    file_size = round(os.path.getsize(image_file_path) / 1024, 2)
+                    file_size = os.path.getsize(image_file_path) / 1024
                     if file_size < 1:
                         logger.warning(f"File size is too small! File size: {file_size}")
                         os.remove(image_file_path)
                     else:
-                        logger.info(f"Saved picture FileSize = {file_size} KB: {image_file_path}")
+                        saved_pictures_count += 1
+                        saved_pictures_size += file_size
+                        # logger.info(f"Saved picture FileSize = {file_size} KB: {image_file_path}")
                         shutil.move(image_file_path, files_folder)
                 else:
                     logger.warning(f"Opencv couldn't find the file: {image_file_path}")
@@ -570,6 +578,9 @@ def capture(camera_mode):
                 save_picture = False
 
             if threadKill:
+                if saved_pictures_count > 0:
+                    saved_pictures_size = round(saved_pictures_size / 1024, 2)
+                    logger.info(f"Total {saved_pictures_count} images of {saved_pictures_size} Mb in size were recorded.")
                 threadKill = False
                 cap.release()
                 logger.info("Camera closed.")
