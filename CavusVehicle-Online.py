@@ -106,16 +106,12 @@ def upload_data(file_type, file_path=None, file_data=None):
             if status_code == 200 and status == "success":
                 uploaded_file = result.json()["filename"]
                 # logger.info(f"Video File uploaded: {file_name}")
-                date_of_file = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
-                file_date = date_of_file.strftime("%Y-%m-%d")
-                file_time = date_of_file.strftime("%H:%M:%S")
+                file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
                 file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
-                file_data = {"file_name": uploaded_file, "date": file_date, "time": file_time,
-                             "lat": file_lat, "lng": file_lng, "id": file_id}
+                file_data = {"file_name": uploaded_file, "date": f"{file_date}", "lat": file_lat, "lng": file_lng, "id": file_id}
 
                 my_file_data = {"device_name": hostname, "device_type": device_type, "file_id": uploaded_file,
-                                "date": file_date, "time": file_time,
-                                "lat": file_lat, "lng": file_lng, "location_id": file_id}
+                                "date": f"{file_date}", "lat": file_lat, "lng": file_lng, "location_id": file_id}
                 write_json(my_file_data, "uploaded_files.json")
 
                 try:

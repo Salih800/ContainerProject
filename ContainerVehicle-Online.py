@@ -142,7 +142,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                     model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_name)
                     logger.info(f"Model loaded in {round(time.time() - model_load_time, 2)} seconds.")
                 if model is not None:
-                    # detection_start_time = time.time()
+                    detection_start_time = time.time()
                     detection_result = model(file_path, model_size)
                     detection_count = len(detection_result.pandas().xyxy[0]["name"])
                     # logger.info(f"Detection Time: {round((time.time() - detection_start_time), 2)} and count: {detection_count}")
@@ -158,16 +158,14 @@ def upload_data(file_type, file_path=None, file_data=None):
                         result_list.append(result_dict)
 
                 uploaded_file = result.json()["filename"]
-                date_of_file = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
-                file_date = date_of_file.strftime("%Y-%m-%d")
-                file_time = date_of_file.strftime("%H:%M:%S")
+                file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
                 file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
-                file_data = {"file_name": uploaded_file, "date": file_date, "time": file_time,
-                             "lat": file_lat, "lng": file_lng, "id": file_id, "detection": detection_count}
+                file_data = {"file_name": uploaded_file, "date": f"{file_date}", "lat": file_lat,
+                             "lng": file_lng, "id": file_id, "detection": detection_count}
 
                 my_file_data = {"device_name": hostname, "device_type": device_type, "file_id": uploaded_file,
-                                "date": file_date, "time": file_time, "lat": file_lat, "lng": file_lng,
-                                "location_id": file_id, "detection_count": detection_count, "result_list": result_list}
+                                "date": f"{file_date}", "lat": file_lat, "lng": file_lng, "location_id": file_id,
+                                "detection_count": detection_count, "result_list": result_list}
                 write_json(my_file_data, "uploaded_files.json")
 
                 try:
