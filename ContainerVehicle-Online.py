@@ -2,7 +2,7 @@ import base64
 import datetime
 import glob
 import hashlib
-import io
+# import io
 import json
 import logging
 import os
@@ -114,7 +114,13 @@ def upload_data(file_type, file_path=None, file_data=None):
             with open(file_path, 'rb') as img:
                 files = {'file': (file_name, img, 'multipart/form-data', {'Expires': '0'})}
 
-                result = requests.post(url_harddrive, files=files, timeout=timeout_to_upload)
+                date_of_file = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
+                file_date = date_of_file.strftime("%Y-%m-%d")
+                file_time = date_of_file.strftime("%H:%M:%S")
+                file_upload_type = "garbagedevice"
+
+                url_to_upload = url_harddrive + f"type={file_upload_type}&date={file_date}&time={file_time}"
+                result = requests.post(url_to_upload, files=files, timeout=timeout_to_upload)
                 status_code = result.status_code
                 status = result.json()["status"]
 
@@ -134,7 +140,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                             logger.warning(f"{model_name} couldn't downloaded. Request Error: {model_file.status_code}")
                         logger.info(f"Updating {yolov5_reqs}...")
                         yolov5_reqs_update = subprocess.check_call(["pip", "install", "-r", yolov5_reqs]) == 0
-                        if yolov5_reqs_update == True:
+                        if yolov5_reqs_update:
                             logger.info(f"{yolov5_reqs} updated.")
                         else:
                             logger.warning(f"{yolov5_reqs} update failed with {yolov5_reqs_update}")
@@ -142,7 +148,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                     model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_name)
                     logger.info(f"Model loaded in {round(time.time() - model_load_time, 2)} seconds.")
                 if model is not None:
-                    detection_start_time = time.time()
+                    # detection_start_time = time.time()
                     detection_result = model(file_path, model_size)
                     detection_count = len(detection_result.pandas().xyxy[0]["name"])
                     # logger.info(f"Detection Time: {round((time.time() - detection_start_time), 2)} and count: {detection_count}")
@@ -158,13 +164,13 @@ def upload_data(file_type, file_path=None, file_data=None):
                         result_list.append(result_dict)
 
                 uploaded_file = result.json()["filename"]
-                file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
+                # file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
                 file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
-                file_data = {"file_name": uploaded_file, "date": f"{file_date}", "lat": file_lat,
+                file_data = {"file_name": uploaded_file, "date": f"{date_of_file}", "lat": file_lat,
                              "lng": file_lng, "id": file_id, "detection": detection_count}
 
                 my_file_data = {"device_name": hostname, "device_type": device_type, "file_id": uploaded_file,
-                                "date": f"{file_date}", "lat": file_lat, "lng": file_lng, "location_id": file_id,
+                                "date": f"{date_of_file}", "lat": file_lat, "lng": file_lng, "location_id": file_id,
                                 "detection_count": detection_count, "result_list": result_list}
                 write_json(my_file_data, "uploaded_files.json")
 
@@ -727,7 +733,7 @@ url_location = "https://api2.atiknakit.com/uploadGarbageDeviceLocations/"
 url_image = "https://api2.atiknakit.com/uploadGarbageDeviceImage/"
 url_check = "https://cdn.atiknakit.com/"
 url_upload = "https://api2.atiknakit.com/garbagedevice/"
-url_harddrive = "https://cdn.atiknakit.com/upload?type=garbagedevice"
+url_harddrive = "https://cdn.atiknakit.com/upload?"
 timeout = 10
 connection = False
 check_connection = 0
