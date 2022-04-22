@@ -1,5 +1,6 @@
 import base64
 import datetime
+import glob
 import hashlib
 import json
 import logging
@@ -330,6 +331,12 @@ def capture():
         recorded_files = "recorded"
         if not os.path.isdir(recorded_files):
             os.mkdir(recorded_files)
+        else:
+            for old_file in glob.glob(recorded_files + "/*.mp4"):
+                if os.path.getsize(old_file) / 1024 > 100:
+                    shutil.move(old_file, files_folder)
+                else:
+                    os.remove(old_file)
 
         frame_width, frame_height = (640, 480)
         set_fps = 24

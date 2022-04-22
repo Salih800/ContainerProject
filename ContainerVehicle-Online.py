@@ -481,7 +481,10 @@ def capture(camera_mode):
             os.mkdir(recorded_files)
         else:
             for old_file in glob.glob(recorded_files + "/*.jpg"):
-                shutil.move(old_file, files_folder)
+                if os.path.getsize(old_file) / 1024 > 100:
+                    shutil.move(old_file, files_folder)
+                else:
+                    os.remove(old_file)
 
         logger.info(f"Trying to open camera in {camera_mode} mode...")
         old_time = time.time()
