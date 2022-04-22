@@ -565,7 +565,7 @@ def capture(camera_mode):
             if save_picture and frame_count < 400:
                 image_file_path = f'{recorded_files}/{filename}.{image_type}'
                 save_picture = False
-                logger.info(f'Taking picture...')
+                # logger.info(f'Taking picture...')
                 my_imwrite(image_file_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 50])
 
                 if os.path.isfile(image_file_path):
@@ -586,6 +586,8 @@ def capture(camera_mode):
                 pass_the_id = id_number
                 take_picture = False
                 save_picture = False
+                time.sleep(5)
+                threadKill = True
 
             if threadKill:
                 if saved_pictures_count > 0:
