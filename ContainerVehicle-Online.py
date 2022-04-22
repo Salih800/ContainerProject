@@ -481,7 +481,7 @@ def capture(camera_mode):
             os.mkdir(recorded_files)
         else:
             for old_file in glob.glob(recorded_files + "/*.jpg"):
-                if os.path.getsize(old_file) / 1024 > 100:
+                if os.path.getsize(old_file) / 1024 > 5:
                     shutil.move(old_file, files_folder)
                 else:
                     os.remove(old_file)
