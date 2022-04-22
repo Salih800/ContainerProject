@@ -844,7 +844,7 @@ while True:
                 if time.time() - saveLocationTime > 5:
                     saveLocationTime = time.time()
 
-                    if geopy.distance.distance(location_gps, old_location_gps).meters > 10:
+                    if geopy.distance.distance(location_gps, old_location_gps).meters > 20:
                         on_the_move = True
                         location_data = {"date": date_local.strftime("%Y-%m-%d %H:%M:%S"), "lat": location_gps[0],
                                          "lng": location_gps[1], "speed": speed_in_kmh}
@@ -890,7 +890,7 @@ while True:
                             f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds'
                             f' and Minimum distance = {round(minDistance, 2)} meters')
                     if not on_the_move:
-                        if geopy.distance.distance(location_gps, santiye_location).meters < 100:
+                        if geopy.distance.distance(location_gps, santiye_location).meters < 200:
                             logger.info(f"Vehicle is in the station.")
                             time.sleep(30)
                         else:
