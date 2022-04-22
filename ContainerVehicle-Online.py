@@ -520,7 +520,11 @@ def capture(camera_mode):
         while True:
             ret, img = cap.read()
             if not ret:
-                restart_system("warning", f"ret was {ret}: {subprocess.check_call(['ls', '/dev/video0'])}")
+                try:
+                    camera_is = subprocess.call(["ls", "/dev/video0"])
+                    restart_system("warning", f"ret was {ret}: {camera_is}")
+                except:
+                    restart_system("error", "Camera not Found!")
 
             if stream:
                 try:
