@@ -822,6 +822,8 @@ while True:
                     break
                 except:
                     error_handling()
+                    time.sleep(5)
+                    break
 
         if data_type == "RMC":
             data_type = str
