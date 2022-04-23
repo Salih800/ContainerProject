@@ -19,7 +19,7 @@ import serial
 #from getmac import get_mac_address
 
 # hello_21-12-2021
-#1
+#2
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
