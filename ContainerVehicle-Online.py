@@ -86,19 +86,20 @@ def restart_system(restart_type=None, why=None):
 
 def write_json(json_data, json_file_name='locations.json'):
     json_file_path = f"{files_folder}/{json_file_name}"
-    if not os.path.isfile(json_file_path):
-        with open(json_file_path, "w"):
-            pass
-
-    json_data = json.dumps(json_data)
-    with open(json_file_path, 'r+') as json_file:
-        data = json_file.read()
-        if len(data) < 1:
-            data = f"[{json_data}]"
-        else:
-            json_file.seek(len(data)-1)
-            data = f",{json_data}]"
-        json_file.write(data)
+    try:
+        data = json.load(open(json_file_path, "r"))
+        print(data)
+        data.append(json_data)
+        json.dump(data, open(json_file_path, "w"), indent=4)
+    except json.decoder.JSONDecodeError as json_error:
+        data = json.loads(open(json_file_path).read()[:json_error.pos])
+        data.append(json_data)
+        json.dump(data, open(json_file_path, "w"), indent=4)
+    except FileNotFoundError:
+        data = [json_data]
+        json.dump(data, open(json_file_path, "w"), indent=4)
+    except:
+        error_handling()
 
 
 def upload_data(file_type, file_path=None, file_data=None):
