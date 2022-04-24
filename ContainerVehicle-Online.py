@@ -88,7 +88,6 @@ def write_json(json_data, json_file_name='locations.json'):
     json_file_path = f"{files_folder}/{json_file_name}"
     try:
         data = json.load(open(json_file_path, "r"))
-        print(data)
         data.append(json_data)
         json.dump(data, open(json_file_path, "w"), indent=4)
     except json.decoder.JSONDecodeError as json_error:
