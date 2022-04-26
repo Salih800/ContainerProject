@@ -354,6 +354,7 @@ def capture():
         global threadKill
         global frame_count
         global stream
+        global pass_the_id
 
         video_save = False
         streaming_width = 640
@@ -407,6 +408,7 @@ def capture():
                 frame_count = frame_count + 1
                 if frame_count > 2880:
                     logger.warning(f"Frame count is too high! {frame_count} frames. Ending the record...")
+                    pass_the_id = id_number
                     save_picture = False
 
             if not save_picture:
@@ -584,6 +586,7 @@ threadKill = False
 filename = None
 save_picture = False
 id_number = None
+pass_the_id = None
 stream = False
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 frame_count = 0
@@ -705,11 +708,14 @@ while True:
                         distances.append(distance)
                         if distance < detectLocationDistance:
                             id_number = garbageLocation[2]
+                            if id_number == pass_the_id:
+                                continue
+                            pass_the_id = 0
+                            frame_count = 0
                             logger.info(f'Found a close garbage. Distance is: {round(distance, 2)} meters')
-                            logger.info(f'Distance Detection Interval: {detectLocationDistance}')
+                            # logger.info(f'Distance Detection Interval: {detectLocationDistance}')
                             video_date = date_local.strftime('%Y-%m-%d__%H-%M-%S,,')
                             filename = f'{video_date}{location_gps[0]},{location_gps[1]},{id_number}'
-                            frame_count = 0
                             save_picture = True
                             break
 
