@@ -81,24 +81,30 @@ def restart_system(restart_type=None, why=None):
     if restart_type == "error":
         logger.error(f"Restarting the system: {why}")
     subprocess.call(["sudo", "reboot"])
-    sys.exit("Rebooting...")
 
 
 def write_json(json_data, json_file_name='locations.json'):
-    json_file_path = f"{files_folder}/{json_file_name}"
+    json_file_path = f"{json_file_name}"
     try:
-        data = json.load(open(json_file_path, "r"))
-        data.append(json_data)
+        if not os.path.isfile(json_file_path):
+            data = [json_data]
+        else:
+            data = read_json(json_file_path)
+            data.append(json_data)
         json.dump(data, open(json_file_path, "w"), indent=4)
-    except json.decoder.JSONDecodeError as json_error:
-        data = json.loads(open(json_file_path).read()[:json_error.pos])
-        data.append(json_data)
-        json.dump(data, open(json_file_path, "w"), indent=4)
-    except FileNotFoundError:
-        data = [json_data]
-        json.dump(data, open(json_file_path, "w"), indent=4)
+
     except:
         error_handling()
+
+
+def read_json(json_file):
+    try:
+        data = json.load(open(json_file, "r"))
+    except json.decoder.JSONDecodeError as json_error:
+        logger.warning(f"JSONDecodeError happened at {json_file}: {json_error.pos}. Trying to save the file...")
+        data = json.loads(open(json_file).read()[:json_error.pos])
+        logger.info(f"{len(data)} file info saved.")
+    return data
 
 
 def upload_data(file_type, file_path=None, file_data=None):
