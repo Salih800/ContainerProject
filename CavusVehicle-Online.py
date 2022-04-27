@@ -78,7 +78,7 @@ def restart_system(restart_type=None, why=None):
     subprocess.call(["sudo", "reboot"])
 
 def write_json(json_data, json_file_name='locations.json'):
-    json_file_path = f"{json_file_name}"
+    json_file_path = f"{files_folder}/{json_file_name}"
     try:
         if not os.path.isfile(json_file_path):
             data = [json_data]
