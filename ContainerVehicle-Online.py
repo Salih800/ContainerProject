@@ -755,6 +755,7 @@ check_connection = 0
 running_threads_check_time = 0
 santiye_location = [41.09892610381052, 28.780632617146328]
 
+gps_log_time = 0
 files_folder = "files"
 detectLocationDistance = 40
 threadKill = False
@@ -807,14 +808,127 @@ while True:
         with serial.Serial(port=gps_port, baudrate=9600, bytesize=8, timeout=1,
                            stopbits=serial.STOPBITS_ONE) as gps_data:
             parse_error_count = 0
-            while data_type != 'RMC':
+            invalid_data_count = 0
+            while True:
                 try:
                     new_data = gps_data.readline().decode('utf-8', errors='replace')
                     if len(new_data) < 1:
                         raise ValueError("Incoming GPS Data is empty")
                     for msg in reader.next(new_data):
                         parsed_data = pynmea2.parse(str(msg))
-                        data_type = parsed_data.sentence_type
+                        if parsed_data.sentence_type == "RMC":
+                            if parsed_data.status == "A":
+                                location_gps = [parsed_data.latitude, parsed_data.longitude]
+                                time_gps = str(parsed_data.timestamp)
+                                date_gps = str(parsed_data.datestamp)
+                                speed_in_kmh = round(parsed_data.spd_over_grnd * 1.852, 3)
+                                date_local = datetime.datetime.strptime(f"{date_gps} {time_gps[:8]}",
+                                                                        '%Y-%m-%d %H:%M:%S') + datetime.timedelta(
+                                    hours=3)
+                                if time.time() - gps_log_time > 60:
+                                    gps_log_time = time.time()
+                                    logger.info(f'Datetime of GPS: {date_gps} {time_gps} '
+                                                f'and Speed: {round(speed_in_kmh, 2)} km/s')
+
+                                if time.time() - checkCurrentTime > 600:
+                                    checkCurrentTime = time.time()
+                                    if abs(datetime.datetime.now() - date_local) > datetime.timedelta(seconds=3):
+                                        subprocess.call(
+                                            ['sudo', 'date', '-s', date_local.strftime('%Y/%m/%d %H:%M:%S')])
+                                        logger.info("System Date Updated.")
+
+                                if time.time() - saveLocationTime > 5:
+                                    saveLocationTime = time.time()
+
+                                    if geopy.distance.distance(location_gps, old_location_gps).meters > 20:
+                                        on_the_move = True
+                                        location_data = {"date": date_local.strftime("%Y-%m-%d %H:%M:%S"),
+                                                         "lat": location_gps[0],
+                                                         "lng": location_gps[1], "speed": speed_in_kmh}
+                                        old_location_gps = location_gps
+                                        if connection:
+                                            threading.Thread(target=upload_data, name="location_upload",
+                                                             kwargs={"file_type": "location",
+                                                                     "file_data": location_data},
+                                                             daemon=True).start()
+                                        else:
+                                            logger.info("There is no connection. Saving location to file...")
+                                            write_json(location_data, "locations.json")
+                                    else:
+                                        on_the_move = False
+
+                                if take_picture:
+                                    distance = geopy.distance.distance(location_gps, garbageLocation[:2]).meters
+                                    if distance > detectLocationDistance:
+                                        take_picture = False
+                                        logger.info(f'Garbage is out of reach. Distance is: {round(distance, 2)}')
+                                    elif speed_in_kmh >= 5.0:
+                                        logger.info(f'Distance: {round(distance, 2)} meters')
+
+                                if not take_picture:
+                                    distances = []
+                                    pTimeCheckLocations = time.time()
+                                    for garbageLocation in garbageLocations:
+                                        distance = geopy.distance.distance(location_gps, garbageLocation[:2]).meters
+                                        distances.append(distance)
+                                        if distance < detectLocationDistance:
+                                            id_number = garbageLocation[2]
+                                            if pass_the_id == id_number:
+                                                continue
+                                            pass_the_id = 0
+                                            frame_count = 0
+                                            # id_number = garbageLocation[2]
+                                            take_picture = True
+                                            logger.info(
+                                                f'Found a close garbage. Distance is: {round(distance, 2)} meters')
+                                            break
+                                    minDistance = min(distances)
+
+                                    if on_the_move:
+                                        logger.info(
+                                            f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds'
+                                            f' and Minimum distance = {round(minDistance, 2)} meters')
+                                    if not on_the_move:
+                                        if geopy.distance.distance(location_gps, santiye_location).meters < 200:
+                                            logger.info(f"Vehicle is in the station.")
+                                            time.sleep(30)
+                                        else:
+                                            logger.info("The vehicle is steady.")
+
+                                if not save_picture:
+                                    if take_picture and speed_in_kmh < 5.0:
+                                        logger.info(
+                                            f'Distance: {round(distance, 2)} meters')
+                                        photo_date = date_local.strftime('%Y-%m-%d__%H-%M-%S,,')
+                                        filename = f'{photo_date}{location_gps[0]},{location_gps[1]},{id_number}'
+
+                                        save_picture = True
+                                        time.sleep(1)
+                                else:
+                                    is_camera = subprocess.call(["ls", "/dev/video0"])
+                                    take_picture = False
+                                    save_picture = False
+                                    if is_camera == 2:
+                                        restart_system("error", f"save_picture was {save_picture}: {is_camera}")
+
+                                if minDistance >= 100 and not stream:
+                                    if "opencv" in check_running_threads():
+                                        logger.info("Closing camera...")
+                                        threadKill = True
+
+                                elif minDistance < 100:
+                                    if "opencv" not in check_running_threads():
+                                        logger.info("Starting OpenCV")
+                                        threading.Thread(target=capture, name="opencv", args=("record",),
+                                                         daemon=True).start()
+                            else:
+                                invalid_data_count += 1
+                                if invalid_data_count >= 10:
+                                    invalid_data_count = 0
+                                    logger.warning(f"Invalid GPS Data: {invalid_data_count}")
+                                    break
+                                continue
+
                 except pynmea2.nmea.ParseError as parse_error:
                     parse_error_count = parse_error_count + 1
                     if parse_error_count >= 10:
@@ -824,119 +938,13 @@ while True:
                     continue
                 except ValueError as verr:
                     logger.warning(f"{verr}")
-                    time.sleep(5)
+                    time.sleep(1)
                     break
                 except:
                     error_handling()
                     time.sleep(5)
                     break
 
-        if data_type == "RMC":
-            data_type = str
-
-            if parsed_data.status == 'A':
-                location_gps = [parsed_data.latitude, parsed_data.longitude]
-                time_gps = str(parsed_data.timestamp)
-                date_gps = str(parsed_data.datestamp)
-                speed_in_kmh = round(parsed_data.spd_over_grnd * 1.852, 3)
-                date_local = datetime.datetime.strptime(f"{date_gps} {time_gps[:8]}",
-                                                        '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=3)
-                logger.info(f'Datetime of GPS: {date_gps} {time_gps} and Speed: {round(speed_in_kmh, 2)} km/s')
-
-                if time.time() - checkCurrentTime > 600:
-                    checkCurrentTime = time.time()
-                    if abs(datetime.datetime.now() - date_local) > datetime.timedelta(seconds=3):
-                        subprocess.call(['sudo', 'date', '-s', date_local.strftime('%Y/%m/%d %H:%M:%S')])
-                        logger.info("System Date Updated.")
-
-                if time.time() - saveLocationTime > 5:
-                    saveLocationTime = time.time()
-
-                    if geopy.distance.distance(location_gps, old_location_gps).meters > 20:
-                        on_the_move = True
-                        location_data = {"date": date_local.strftime("%Y-%m-%d %H:%M:%S"), "lat": location_gps[0],
-                                         "lng": location_gps[1], "speed": speed_in_kmh}
-                        old_location_gps = location_gps
-                        if connection:
-                            threading.Thread(target=upload_data, name="location_upload",
-                                             kwargs={"file_type": "location", "file_data": location_data},
-                                             daemon=True).start()
-                        else:
-                            logger.info("There is no connection. Saving location to file...")
-                            write_json(location_data, "locations.json")
-                    else:
-                        on_the_move = False
-
-                if take_picture:
-                    distance = geopy.distance.distance(location_gps, garbageLocation[:2]).meters
-                    if distance > detectLocationDistance:
-                        take_picture = False
-                        logger.info(f'Garbage is out of reach. Distance is: {round(distance, 2)}')
-                    elif speed_in_kmh >= 5.0:
-                        logger.info(f'Distance: {round(distance, 2)} meters')
-
-                if not take_picture:
-                    distances = []
-                    pTimeCheckLocations = time.time()
-                    for garbageLocation in garbageLocations:
-                        distance = geopy.distance.distance(location_gps, garbageLocation[:2]).meters
-                        distances.append(distance)
-                        if distance < detectLocationDistance:
-                            id_number = garbageLocation[2]
-                            if pass_the_id == id_number:
-                                continue
-                            pass_the_id = 0
-                            frame_count = 0
-                            # id_number = garbageLocation[2]
-                            take_picture = True
-                            logger.info(f'Found a close garbage. Distance is: {round(distance, 2)} meters')
-                            break
-                    minDistance = min(distances)
-
-                    if on_the_move:
-                        logger.info(
-                            f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds'
-                            f' and Minimum distance = {round(minDistance, 2)} meters')
-                    if not on_the_move:
-                        if geopy.distance.distance(location_gps, santiye_location).meters < 200:
-                            logger.info(f"Vehicle is in the station.")
-                            time.sleep(30)
-                        else:
-                            logger.info("The vehicle is steady.")
-
-                if not save_picture:
-                    if take_picture and speed_in_kmh < 5.0:
-                        logger.info(
-                            f'Distance: {round(distance, 2)} meters')
-                        photo_date = date_local.strftime('%Y-%m-%d__%H-%M-%S,,')
-                        filename = f'{photo_date}{location_gps[0]},{location_gps[1]},{id_number}'
-
-                        save_picture = True
-                        time.sleep(1)
-                else:
-                    is_camera = subprocess.call(["ls", "/dev/video0"])
-                    take_picture = False
-                    save_picture = False
-                    if is_camera == 2:
-                        restart_system("error", f"save_picture was {save_picture}: {is_camera}")
-
-                if minDistance >= 100 and not stream:
-                    if "opencv" in check_running_threads():
-                        logger.info("Closing camera...")
-                        threadKill = True
-
-                elif minDistance < 100:
-                    if "opencv" not in check_running_threads():
-                        logger.info("Starting OpenCV")
-                        threading.Thread(target=capture, name="opencv", args=("record", ), daemon=True).start()
-
-            elif parsed_data.status == 'V':
-                logger.warning(f'Invalid GPS info!!: {parsed_data.status}')
-                time.sleep(5)
-
-    except serial.serialutil.SerialException as serial_error:
-        logger.error(f"{serial_error}\tGPS Port: {gps_port}")
-        time.sleep(5)
-
     except:
         error_handling()
+        time.sleep(5)

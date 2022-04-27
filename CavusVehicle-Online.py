@@ -758,9 +758,6 @@ while True:
                 logger.warning(f'Invalid GPS info!!: {parsed_data.status}')
                 time.sleep(5)
 
-    except serial.serialutil.SerialException as serial_error:
-        logger.error(f"{serial_error}\tPort: {gps_port}")
-        time.sleep(5)
-
     except:
         error_handling()
+        time.sleep(5)
