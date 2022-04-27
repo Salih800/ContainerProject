@@ -893,7 +893,9 @@ while True:
                                             logger.info(f"Vehicle is in the station.")
                                             time.sleep(30)
                                         else:
-                                            logger.info("The vehicle is steady.")
+                                            logger.info(f"The vehicle is steady. Location: {location_gps}")
+                                            if minDistance > 100:
+                                                time.sleep(minDistance/20)
 
                                 if not save_picture:
                                     if take_picture and speed_in_kmh < 5.0:

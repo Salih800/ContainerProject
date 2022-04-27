@@ -742,7 +742,9 @@ while True:
                             logger.info(f"Vehicle is in the station.")
                             time.sleep(30)
                         else:
-                            logger.info("The vehicle is steady.")
+                            logger.info(f"The vehicle is steady. Location: {location_gps}")
+                            if minDistance > 100:
+                                time.sleep(minDistance / 20)
 
                 if minDistance >= 100 and not stream:
                     if "opencv" in check_running_threads():
