@@ -91,7 +91,7 @@ def write_json(json_data, json_file_name='locations.json'):
         else:
             data = read_json(json_file_path)
             data.append(json_data)
-        json.dump(data, open(json_file_path, "w"), indent=4)
+        json.dump(data, open(json_file_path, "w"))
 
     except:
         error_handling()

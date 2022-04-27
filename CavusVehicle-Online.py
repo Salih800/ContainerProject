@@ -85,7 +85,7 @@ def write_json(json_data, json_file_name='locations.json'):
         else:
             data = read_json(json_file_path)
             data.append(json_data)
-        json.dump(data, open(json_file_path, "w"), indent=4)
+        json.dump(data, open(json_file_path, "w"))
 
     except:
         error_handling()
@@ -182,7 +182,7 @@ def upload_data(file_type, file_path=None, file_data=None):
             else:
                 logger.warning(f"uploaded_videos.json upload warning: {result.status_code}")
         elif file_type == "uploaded_files":
-            if os.path.getsize(file_path) / 1024 > 50:
+            if os.path.getsize(file_path) / 1024 > 100:
                 logger.info(f"Trying to upload {file_path}")
                 uploaded_files_date = datetime.datetime.now().strftime("%Y-%m-%d")
                 uploaded_files_time = datetime.datetime.now().strftime("%H-%M-%S")
