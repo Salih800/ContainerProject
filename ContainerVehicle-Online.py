@@ -22,7 +22,7 @@ if os.path.isfile(log_file_name):
     with open(log_file_name, "r+") as log_file:
         log_file.write("\n")
 
-logger = logging.getLogger(hostname)
+logger = logging.getLogger("mylog")
 logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(log_file_name)
 fmt = logging.Formatter('%(asctime)s %(levelname)-8s: %(message)s')
