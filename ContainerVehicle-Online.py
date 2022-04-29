@@ -810,7 +810,7 @@ while True:
             parse_error_count = 0
             invalid_data_count = 0
             valid_gps_data = False
-            while True:
+            while not valid_gps_data:
                 try:
                     new_data = gps_data.readline().decode('utf-8', errors='replace')
                     if len(new_data) < 1:
@@ -824,8 +824,8 @@ while True:
                             else:
                                 invalid_data_count += 1
                                 if invalid_data_count >= 10:
-                                    invalid_data_count = 0
                                     logger.warning(f"Invalid GPS Data: {invalid_data_count}")
+                                    invalid_data_count = 0
                                     break
                                 continue
 
