@@ -115,72 +115,64 @@ def upload_data(file_type, file_path=None, file_data=None):
                 file_upload_type = "garbagedevice"
 
                 url_to_upload = url_harddrive + f"type={file_upload_type}&date={file_date}&time={file_time}"
-                result = requests.post(url_to_upload, files=files, timeout=timeout_to_upload)
+                result = MyRequestsClass(request_type="post", url=url_to_upload, files=files)
                 status_code = result.status_code
-                status = result.json()["status"]
 
-            if status_code == 200 and status == "success":
-                uploaded_file = result.json()["filename"]
-                # file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
-                file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
-                file_data = {"file_name": uploaded_file, "date": f"{date_of_file}",
-                             "lat": file_lat, "lng": file_lng, "id": file_id}
+            if status_code == 200:
+                status = result.result.json()["status"]
+                if status == "success":
+                    uploaded_file = result.result.json()["filename"]
+                    # file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
+                    file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
+                    file_data = {"file_name": uploaded_file, "date": f"{date_of_file}",
+                                 "lat": file_lat, "lng": file_lng, "id": file_id}
 
-                my_file_data = {"device_name": hostname, "device_type": device_type, "file_id": uploaded_file,
-                                "date": f"{date_of_file}", "lat": file_lat, "lng": file_lng, "location_id": file_id}
-                write_json(my_file_data, "uploaded_files.json")
+                    my_file_data = {"device_name": hostname, "device_type": device_type, "file_id": uploaded_file,
+                                    "date": f"{date_of_file}", "lat": file_lat, "lng": file_lng, "location_id": file_id}
+                    write_json(my_file_data, "uploaded_files.json")
 
-                try:
-                    result = requests.post(url_image + hostname, json=file_data, timeout=timeout_to_upload)
+                    result = MyRequestsClass(request_type="post", url=url_image + hostname, json=file_data)
                     if not result.status_code == 200:
-                        logger.warning(f"Video Name couldn't uploaded! Status Code: {result.status_code}")
-                        write_json(file_data, "uploaded_videos.json")
-                except:
-                    error_handling()
-                    logger.warning(f"Video Name couldn't uploaded! Saving to file...")
-                    write_json(file_data, "uploaded_videos.json")
+                        logger.warning(f"Video Name couldn't uploaded! "
+                                       f"Status Code: {result.status_code}:{result.error}")
+                        write_json(file_data, "uploaded_images.json")
 
-                os.remove(file_path)
+                    os.remove(file_path)
+
+                else:
+                    logger.error(f"Video file couldn't uploaded! "
+                                 f"Status Code: {result.status_code}\tStatus: {result.error}")
 
             else:
-                logger.error(f"Video file couldn't uploaded! Status Code: {result.status_code}\tStatus: {result.json()}")
+                logger.warning(f"Video file couldn't uploaded! Status Code: {status_code}:{result.error}")
 
         elif file_type == "location":
-            try:
-                result = requests.post(url_location + hostname, json=file_data, timeout=timeout_to_upload)
-                if not result.status_code == 200:
-                    logger.warning(f"location couldn't uploaded! Status Code: {result.status_code}")
-                    write_json(file_data, "locations.json")
-            except requests.exceptions.ConnectionError:
-                logger.warning(f"No internet. Location couldn't uploaded! Saving to file...")
-                write_json(file_data, "locations.json")
-            except requests.exceptions.ReadTimeout:
-                logger.warning(f"Connection timeout in {timeout_to_upload} seconds: {url_location}")
-                write_json(file_data, "locations.json")
-            except:
-                error_handling()
-                logger.warning(f"Location couldn't uploaded! Saving to file...")
+            result = MyRequestsClass(request_type="post", url=url_location + hostname, json=file_data)
+            if not result.status_code == 200:
+                logger.warning(f"location couldn't uploaded! "
+                               f"Status Code: {result.status_code}:{result.error}")
                 write_json(file_data, "locations.json")
 
         elif file_type == "locations":
             # with open(file_path) as file:
             location_json = read_json(file_path)
-            result = requests.post(url_location + hostname, json=location_json, timeout=timeout_to_upload)
+            result = MyRequestsClass(request_type="post", url=url_location + hostname, json=location_json)
             if result.status_code == 200:
                 logger.info("locations.json uploaded")
                 os.remove(file_path)
             else:
-                logger.warning(f"locations.json upload warning: {result.status_code}")
+                logger.warning(f"locations.json upload warning: {result.status_code}:{result.error}")
 
         elif file_type == "uploaded_videos":
             # with open(file_path) as file:
             videos_json = read_json(file_path)
-            result = requests.post(url_image + hostname, json=videos_json, timeout=timeout_to_upload)
+            result = MyRequestsClass(request_type="post", url=url_image + hostname, json=videos_json)
             if result.status_code == 200:
                 logger.info("uploaded_videos.json uploaded")
                 os.remove(file_path)
             else:
                 logger.warning(f"uploaded_videos.json upload warning: {result.status_code}")
+
         elif file_type == "uploaded_files":
             if os.path.getsize(file_path) / 1024 > 100:
                 logger.info(f"Trying to upload {file_path}")
@@ -331,6 +323,29 @@ def listen_to_server():
         error_handling()
         stream = False
         time.sleep(5)
+
+
+class MyRequestsClass:
+    def __init__(self, request_type=None, **kwargs):
+        self.result = None
+        self.status_code = 0
+        self.kwargs = kwargs
+        self.type = request_type
+        self.error = None
+        self.run()
+
+    def run(self):
+        try:
+            if "post" == self.type:
+                result = requests.post(**self.kwargs, timeout=60)
+            if "get" == self.type:
+                result = requests.get(**self.kwargs, timeout=20)
+            self.status_code = result.status_code
+            self.result = result
+            self.error = result.text
+        except:
+            self.error = sys.exc_info()
+            # logger.error("", exc_info=True)
 
 
 def capture():

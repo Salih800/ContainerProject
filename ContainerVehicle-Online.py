@@ -128,9 +128,9 @@ def upload_data(file_type, file_path=None, file_data=None):
                 url_to_upload = url_harddrive + f"type={file_upload_type}&date={file_date}&time={file_time}"
                 result = MyRequestsClass(request_type="post", url=url_to_upload, files=files)
                 status_code = result.status_code
-                status = result.result.json()["status"]
 
             if status_code == 200:
+                status = result.result.json()["status"]
                 if status == "success":
                     if model is None:
                         model_name = device_information["detection_model"]["name"]
@@ -213,8 +213,8 @@ def upload_data(file_type, file_path=None, file_data=None):
 
         elif file_type == "uploaded_images":
             # with open(file_path) as file:
-            videos_json = read_json(file_path)
-            result = MyRequestsClass(request_type="post", url=url_image + hostname, json=videos_json)
+            images_json = read_json(file_path)
+            result = MyRequestsClass(request_type="post", url=url_image + hostname, json=images_json)
             if result.status_code == 200:
                 logger.info("uploaded_images.json uploaded")
                 os.remove(file_path)
