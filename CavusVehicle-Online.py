@@ -102,7 +102,7 @@ def read_json(json_file):
 
 
 def upload_data(file_type, file_path=None, file_data=None):
-    timeout_to_upload = 60
+    timeout_to_upload = 120
     try:
         if file_type == "video":
             file_name = os.path.basename(file_path)
