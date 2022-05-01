@@ -168,7 +168,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                                     result_dict[value] = int(detection_result.pandas().xyxy[0][value][i])
                             result_list.append(result_dict)
 
-                    uploaded_file = result.json()["filename"]
+                    uploaded_file = result.result.json()["filename"]
                     # file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
                     file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
                     file_data = {"file_name": uploaded_file, "date": f"{date_of_file}", "lat": file_lat,
