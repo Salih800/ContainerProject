@@ -418,7 +418,7 @@ def capture():
 
                 out.write(img)
                 frame_count = frame_count + 1
-                if frame_count > 2880:
+                if frame_count >= 1440:
                     logger.warning(f"Frame count is too high! {frame_count} frames. Ending the record...")
                     pass_the_id = id_number
                     save_picture = False
