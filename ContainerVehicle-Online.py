@@ -624,7 +624,7 @@ def check_internet():
                     if log_size > 1:
                         # log_date = datetime.datetime.now().strftime("%Y-%m-%d")
                         # log_time = datetime.datetime.now().strftime("%H-%M-%S")
-                        log_file_upload = f"{files_folder}/{get_date}{hostname}.log"
+                        log_file_upload = f"{files_folder}/{get_date()}{hostname}.log"
                         logger.info(f"Trying to copy {log_file_upload}...")
                         shutil.copy(log_file_name, log_file_upload)
                         # rclone_log = subprocess.check_call(
