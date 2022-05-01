@@ -126,113 +126,101 @@ def upload_data(file_type, file_path=None, file_data=None):
                 file_upload_type = "garbagedevice"
 
                 url_to_upload = url_harddrive + f"type={file_upload_type}&date={file_date}&time={file_time}"
-                result = requests.post(url_to_upload, files=files, timeout=timeout_to_upload)
+                result = MyRequestsClass(request_type="post", url=url_to_upload, files=files)
                 status_code = result.status_code
-                status = result.json()["status"]
+                status = result.result.json()["status"]
 
-            if status_code == 200 and status == "success":
-                if model is None:
-                    model_name = device_information["detection_model"]["name"]
-                    model_size = device_information["detection_model"]["size"]
+            if status_code == 200:
+                if status == "success":
+                    if model is None:
+                        model_name = device_information["detection_model"]["name"]
+                        model_size = device_information["detection_model"]["size"]
 
-                    if not os.path.isfile(model_name):
-                        logger.warning(f"{model_name} couldn't found. Trying to download from Github...")
-                        model_file = requests.get(model_link + model_name)
-                        if model_file.status_code == 200:
-                            with open(model_name, "wb") as model_save:
-                                model_save.write(model_file.content)
-                            logger.info(f"{model_name} downloaded and saved.")
-                        else:
-                            logger.warning(f"{model_name} couldn't downloaded. Request Error: {model_file.status_code}")
-                        logger.info(f"Updating {yolov5_reqs}...")
-                        yolov5_reqs_update = subprocess.check_call(["pip", "install", "-r", yolov5_reqs]) == 0
-                        if yolov5_reqs_update:
-                            logger.info(f"{yolov5_reqs} updated.")
-                        else:
-                            logger.warning(f"{yolov5_reqs} update failed with {yolov5_reqs_update}")
-                    model_load_time = time.time()
-                    model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_name)
-                    logger.info(f"Model loaded in {round(time.time() - model_load_time, 2)} seconds.")
-                if model is not None:
-                    # detection_start_time = time.time()
-                    detection_result = model(file_path, model_size)
-                    detection_count = len(detection_result.pandas().xyxy[0]["name"])
-                    # logger.info(f"Detection Time: {round((time.time() - detection_start_time), 2)} and count: {detection_count}")
-                    for i in range(detection_count):
-                        result_dict = {}
-                        for value in detect_values:
-                            if value == "confidence":
-                                result_dict[value] = detection_result.pandas().xyxy[0][value][i]
-                            elif value == "name":
-                                result_dict[value] = "Taken" if detection_result.pandas().xyxy[0][value][i] == "Alındı" else "empty"
+                        if not os.path.isfile(model_name):
+                            logger.warning(f"{model_name} couldn't found. Trying to download from Github...")
+                            model_file = requests.get(model_link + model_name)
+                            if model_file.status_code == 200:
+                                with open(model_name, "wb") as model_save:
+                                    model_save.write(model_file.content)
+                                logger.info(f"{model_name} downloaded and saved.")
                             else:
-                                result_dict[value] = int(detection_result.pandas().xyxy[0][value][i])
-                        result_list.append(result_dict)
+                                logger.warning(f"{model_name} couldn't downloaded. Request Error: {model_file.status_code}")
+                            logger.info(f"Updating {yolov5_reqs}...")
+                            yolov5_reqs_update = subprocess.check_call(["pip", "install", "-r", yolov5_reqs]) == 0
+                            if yolov5_reqs_update:
+                                logger.info(f"{yolov5_reqs} updated.")
+                            else:
+                                logger.warning(f"{yolov5_reqs} update failed with {yolov5_reqs_update}")
+                        model_load_time = time.time()
+                        model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_name)
+                        logger.info(f"Model loaded in {round(time.time() - model_load_time, 2)} seconds.")
+                    if model is not None:
+                        detection_result = model(file_path, model_size)
+                        detection_count = len(detection_result.pandas().xyxy[0]["name"])
+                        for i in range(detection_count):
+                            result_dict = {}
+                            for value in detect_values:
+                                if value == "confidence":
+                                    result_dict[value] = detection_result.pandas().xyxy[0][value][i]
+                                elif value == "name":
+                                    result_dict[value] = "Taken" if detection_result.pandas().xyxy[0][value][i] == "Alındı" else "empty"
+                                else:
+                                    result_dict[value] = int(detection_result.pandas().xyxy[0][value][i])
+                            result_list.append(result_dict)
 
-                uploaded_file = result.json()["filename"]
-                # file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
-                file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
-                file_data = {"file_name": uploaded_file, "date": f"{date_of_file}", "lat": file_lat,
-                             "lng": file_lng, "id": file_id, "detection": detection_count}
+                    uploaded_file = result.json()["filename"]
+                    # file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
+                    file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
+                    file_data = {"file_name": uploaded_file, "date": f"{date_of_file}", "lat": file_lat,
+                                 "lng": file_lng, "id": file_id, "detection": detection_count}
 
-                my_file_data = {"device_name": hostname, "device_type": device_type, "file_id": uploaded_file,
-                                "date": f"{date_of_file}", "lat": file_lat, "lng": file_lng, "location_id": file_id,
-                                "detection_count": detection_count, "result_list": result_list}
-                write_json(my_file_data, "uploaded_files.json")
+                    my_file_data = {"device_name": hostname, "device_type": device_type, "file_id": uploaded_file,
+                                    "date": f"{date_of_file}", "lat": file_lat, "lng": file_lng, "location_id": file_id,
+                                    "detection_count": detection_count, "result_list": result_list}
+                    write_json(my_file_data, "uploaded_files.json")
 
-                try:
-                    result = requests.post(url_image + hostname, json=file_data, timeout=timeout_to_upload)
+                    result = MyRequestsClass(request_type="post", url=url_image + hostname, json=file_data)
                     if not result.status_code == 200:
-                        logger.warning(f"Image Name couldn't uploaded! Status Code: {result.status_code}")
+                        logger.warning(f"Image Name couldn't uploaded! "
+                                       f"Status Code: {result.status_code}:{result.error}")
                         write_json(file_data, "uploaded_images.json")
-                except:
-                    error_handling()
-                    logger.warning(f"Image Name couldn't uploaded! Saving to file...")
-                    write_json(file_data, "uploaded_images.json")
 
-                os.remove(file_path)
+                    os.remove(file_path)
+                else:
+                    logger.error(f"Image file couldn't uploaded! "
+                                 f"Status Code: {result.status_code}\tStatus: {result.error}")
 
             else:
-                logger.error(f"Image file couldn't uploaded! Status Code: {result.status_code}\tStatus: {result.json()}")
+                logger.warning(f"Image file couldn't uploaded! Status Code: {status_code}:{result.error}")
 
         elif file_type == "location":
-            try:
-                result = requests.post(url_location + hostname, json=file_data, timeout=timeout_to_upload)
-                if not result.status_code == 200:
-                    logger.warning(f"location couldn't uploaded! Status Code: {result.status_code}")
-                    write_json(file_data, "locations.json")
-            except requests.exceptions.ConnectionError:
-                logger.warning(f"No internet. Location couldn't uploaded! Saving to file...")
-                write_json(file_data, "locations.json")
-            except requests.exceptions.ReadTimeout:
-                logger.warning(f"Connection timeout in {timeout_to_upload} seconds: {url_location}")
-                write_json(file_data, "locations.json")
-            except:
-                error_handling()
 
-                logger.warning(f"Location couldn't uploaded! Saving to file...")
+            result = MyRequestsClass(request_type="post", url=url_location + hostname, json=file_data)
+            if not result.status_code == 200:
+                logger.warning(f"location couldn't uploaded! "
+                               f"Status Code: {result.status_code}:{result.error}")
                 write_json(file_data, "locations.json")
 
         elif file_type == "locations":
             # with open(file_path) as file:
             location_json = read_json(file_path)
-            result = requests.post(url_location + hostname, json=location_json, timeout=timeout_to_upload)
+            result = MyRequestsClass(request_type="post", url=url_location + hostname, json=location_json)
             if result.status_code == 200:
                 logger.info("locations.json uploaded")
                 os.remove(file_path)
             else:
-                logger.warning(f"locations.json upload warning: {result.status_code}")
+                logger.warning(f"locations.json upload warning: {result.status_code}:{result.error}")
 
         elif file_type == "uploaded_images":
             # with open(file_path) as file:
             videos_json = read_json(file_path)
-            result = requests.post(url_image + hostname, json=videos_json, timeout=timeout_to_upload)
-
+            result = MyRequestsClass(request_type="post", url=url_image + hostname, json=videos_json)
             if result.status_code == 200:
                 logger.info("uploaded_images.json uploaded")
                 os.remove(file_path)
             else:
-                logger.warning(f"uploaded_images.json upload warning: {result.status_code}")
+                logger.warning(f"uploaded_images.json upload warning: {result.status_code}:{result.error}")
+
         elif file_type == "uploaded_files":
             if os.path.getsize(file_path) / 1024 > 500:
                 logger.info(f"Trying to upload {file_path}")
@@ -384,99 +372,27 @@ def listen_to_server():
         time.sleep(5)
 
 
-# def listen_to_me():
-#     global connection
-#
-#     host = "proxy73.rt3.io"
-#     port = 30155
-#     buff_size = 127
-#     alive_msg = b"$k$"
-#
-#     try:
-#         # stream = False
-#         logger.info("Trying to connect to ME")
-#         my_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#         server_address = (host, port)
-#         my_server.connect(server_address)
-#         my_server.settimeout(60)
-#         logger.info(f"Connected at {my_server.getsockname()}.")
-#         id_message = bytes("$id" + hostname + "$", "utf-8")
-#         my_server.sendall(id_message)
-#         logger.info(f"Id message sent to ME: {id_message}")
-#         my_server.sendall(alive_msg)
-#         while True:
-#             logger.info("Listening ME...")
-#             my_server_msg = my_server.recv(buff_size)
-#             if my_server_msg != b"":
-#                 data_orig = my_server_msg.decode("utf-8")
-#                 merge_msg = False
-#                 messages = []
-#                 new_msg = ""
-#                 for d in data_orig:
-#                     if d == "$":
-#                         if not merge_msg:
-#                             merge_msg = True
-#                             continue
-#                         else:
-#                             merge_msg = False
-#                             messages.append(new_msg)
-#                             new_msg = ""
-#                     if merge_msg:
-#                         new_msg += d
-#
-#                 for command in messages:
-#                     if command.startswith("!"):
-#                         do_command = command[1:]
-#                         command_out = subprocess.Popen(do_command, shell=True, stdout=subprocess.PIPE,
-#                                                        stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-#                         # command_out_stdout = command_out.stdout.read()
-#                         # command_out_stderr = command_out.stderr.read()
-#                         # if command_out_stdout != b'':
-#                         #     command_out_stdout = b"$" + command_out.stdout.read() + b"$"
-#                         #     my_server.sendall(command_out_stdout)
-#                         # if command_out_stderr != b'':
-#                         #     command_out_stderr = b"$" + command_out.stderr.read() + b"$"
-#                         #     my_server.sendall(command_out_stderr)
-#                         for line in io.TextIOWrapper(command_out.stdout, encoding="utf-8"):
-#                             line = b"$" + bytes(line, "utf-8") + b"$"
-#                             my_server.sendall(line)
-#                         for line in io.TextIOWrapper(command_out.stderr, encoding="utf-8"):
-#                             line = b"$" + bytes(line, "utf-8") + b"$"
-#                             my_server.sendall(line)
-#
-#
-#                     elif command == "k":
-#                         # if not stream:
-#                         my_server.sendall(alive_msg)
-#                         # logger.info("ME is Online.")
-#                     else:
-#                         logger.warning(f"Unknown message from ME: {command}")
-#                         time.sleep(5)
-#             else:
-#                 logger.error(f"Empty byte from ME. Closing the connection!: ME Message: {my_server_msg}")
-#                 my_server.close()
-#                 break
-#
-#     except socket.timeout:
-#         logger.warning("ME timeout in 60 seconds! Closing the connection.")
-#         # stream = False
-#         time.sleep(5)
-#     except ConnectionRefusedError as cre:
-#         logger.warning(f"ME Connection Refused! Probably server is not online..: {cre}")
-#         # stream = False
-#         time.sleep(5)
-#     except ConnectionAbortedError as cae:
-#         logger.warning(f"ME Connection closed by Client!: {cae}")
-#         # stream = False
-#         time.sleep(5)
-#     except ConnectionResetError as cse:
-#         logger.warning(f"ME Connection closed by server!: {cse}")
-#         # stream = False
-#         time.sleep(5)
-#     except:
-#         error_handling()
-#         # stream = False
-#         time.sleep(5)
+class MyRequestsClass:
+    def __init__(self, request_type=None, **kwargs):
+        self.result = None
+        self.status_code = 0
+        self.kwargs = kwargs
+        self.type = request_type
+        self.error = None
+        self.run()
+
+    def run(self):
+        try:
+            if "post" == self.type:
+                result = requests.post(**self.kwargs, timeout=60)
+            if "get" == self.type:
+                result = requests.get(**self.kwargs, timeout=20)
+            self.status_code = result.status_code
+            self.result = result
+            self.error = result.text
+        except:
+            self.error = sys.exc_info()
+            # logger.error("", exc_info=True)
 
 
 def capture(camera_mode):
