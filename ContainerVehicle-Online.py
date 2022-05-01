@@ -108,12 +108,22 @@ def read_json(json_file):
 
 
 def upload_data(file_type, file_path=None, file_data=None):
-    timeout_to_upload = 60
+    # timeout_to_upload = 60
     detect_values = ["name", "class", "confidence", "xmin", "ymin", "xmax", "ymax"]
     global model
     model_size = device_information["detection_model"]["size"]
     try:
-        if file_type == "image":
+        if file_type == "log":
+            rclone_log = subprocess.check_call(
+                ["rclone", "move", file_path,
+                 f"gdrive:Python/ContainerFiles/logs/"])
+            if not os.path.isfile(file_path):
+                logger.info(f"{file_path} uploaded to gdrive.")
+
+            if os.path.isfile(file_path):
+                logger.warning(f"{file_path} log file couldn't uploaded! Rclone Status: {rclone_log}")
+
+        elif file_type == "image":
             detection_count = 0
             result_list = []
             file_name = os.path.basename(file_path)
@@ -274,6 +284,8 @@ def check_folder():
                     upload_data(file_type="locations", file_path=f"{files_folder}/locations.json")
                 if file_to_upload.endswith(".jpg"):
                     upload_data(file_type="image", file_path=f"{files_folder}/{file_to_upload}")
+                if file_to_upload.endswith(".log"):
+                    upload_data(file_type="log", file_path=f"{files_folder}/{file_to_upload}")
         total_uploaded_file = len(files_list) - len(os.listdir(files_folder))
         if total_uploaded_file > 0:
             upload_end_time = round(time.time() - upload_start_time, 2)
@@ -610,21 +622,21 @@ def check_internet():
 
                     log_size = os.path.getsize(log_file_name) / (1024 * 1024)
                     if log_size > 1:
-                        log_date = datetime.datetime.now().strftime("%Y-%m-%d")
-                        log_time = datetime.datetime.now().strftime("%H-%M-%S")
-                        log_file_upload = f"{log_date}_{log_time}_{hostname}.log"
-                        logger.info(f"Trying to upload {log_file_upload}...")
+                        # log_date = datetime.datetime.now().strftime("%Y-%m-%d")
+                        # log_time = datetime.datetime.now().strftime("%H-%M-%S")
+                        log_file_upload = f"{files_folder}/{get_date}{hostname}.log"
+                        logger.info(f"Trying to copy {log_file_upload}...")
                         shutil.copy(log_file_name, log_file_upload)
-                        rclone_log = subprocess.check_call(
-                            ["rclone", "move", log_file_upload,
-                             f"gdrive:Python/ContainerFiles/logs/"])
-                        if not os.path.isfile(log_file_upload):
-                            with open(log_file_name, 'r+') as file:
-                                file.truncate()
-                            logger.info(f"{log_file_upload} uploaded to gdrive.")
-                        if os.path.isfile(log_file_upload):
-                            logger.warning(f"{log_file_upload} log file couldn't uploaded! Rclone Status: {rclone_log}")
-                            os.remove(log_file_upload)
+                        # rclone_log = subprocess.check_call(
+                        #     ["rclone", "move", log_file_upload,
+                        #      f"gdrive:Python/ContainerFiles/logs/"])
+                        # if not os.path.isfile(log_file_upload):
+                        with open(log_file_name, 'r+') as file:
+                            file.truncate()
+                        logger.info(f"{log_file_upload} copied to {files_folder} folder.")
+                        # if os.path.isfile(log_file_upload):
+                        #     logger.warning(f"{log_file_upload} log file couldn't uploaded! Rclone Status: {rclone_log}")
+                        #     os.remove(log_file_upload)
 
                     pTimeCheck = time.time()
 
