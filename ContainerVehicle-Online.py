@@ -807,7 +807,8 @@ while True:
                         take_picture = False
                         logger.info(f'Garbage is out of reach. Distance is: {round(distance, 2)}')
                     elif speed_in_kmh >= 5.0:
-                        logger.info(f'Distance: {round(distance, 2)} meters')
+                        # logger.info(f'Distance: {round(distance, 2)} meters')
+                        continue
 
                 if not take_picture:
                     distances = []
@@ -843,8 +844,7 @@ while True:
 
                 if not save_picture:
                     if take_picture and speed_in_kmh < 5.0:
-                        logger.info(
-                            f'Distance: {round(distance, 2)} meters')
+                        # logger.info(f'Distance: {round(distance, 2)} meters')
                         photo_date = date_local.strftime('%Y-%m-%d__%H-%M-%S,,')
                         filename = f'{photo_date}{location_gps[0]},{location_gps[1]},{id_number}'
 
