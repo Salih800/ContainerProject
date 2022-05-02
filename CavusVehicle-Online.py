@@ -349,9 +349,9 @@ class MyRequestsClass:
     def run(self):
         try:
             if "post" == self.type:
-                result = requests.post(**self.kwargs, timeout=60)
+                result = requests.post(**self.kwargs, timeout=180)
             if "get" == self.type:
-                result = requests.get(**self.kwargs, timeout=20)
+                result = requests.get(**self.kwargs, timeout=30)
             self.status_code = result.status_code
             self.result = result
             self.error = result.text
