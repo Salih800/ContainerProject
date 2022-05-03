@@ -229,6 +229,8 @@ def check_folder():
             logger.info(f"Files in folder: {len(files_list)}")
         for file_to_upload in files_list:
             if connection:
+                if file_to_upload.endswith(".log"):
+                    upload_data(file_type="log", file_path=f"{files_folder}/{file_to_upload}")
                 if os.path.isfile(f"{files_folder}/uploaded_files.json"):
                     upload_data(file_type="uploaded_files", file_path=f"{files_folder}/uploaded_files.json")
                 if os.path.isfile(f"{files_folder}/uploaded_videos.json"):
@@ -237,8 +239,6 @@ def check_folder():
                     upload_data(file_type="locations", file_path=f"{files_folder}/locations.json")
                 if file_to_upload.endswith(".mp4"):
                     upload_data(file_type="video", file_path=f"{files_folder}/{file_to_upload}")
-                if file_to_upload.endswith(".log"):
-                    upload_data(file_type="log", file_path=f"{files_folder}/{file_to_upload}")
         total_uploaded_file = len(files_list) - len(os.listdir(files_folder))
         if total_uploaded_file > 0:
             upload_end_time = round(time.time() - upload_start_time, 2)
