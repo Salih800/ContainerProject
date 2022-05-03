@@ -513,8 +513,8 @@ def check_internet():
                 check_connection = time.time()
                 logger.info("Checking for internet...")
 
-            log_size = os.path.getsize(log_file_name) / (1024 * 1024)
-            if log_size > 1:
+            # log_size = os.path.getsize(log_file_name) / (1024 * 1024)
+            if os.path.getsize(log_file_name) / (1024 * 1024) > 1:
                 log_file_upload = f"{files_folder}/{get_date()}{hostname}.log"
                 logger.info(f"Trying to copy {log_file_upload}...")
                 shutil.copy(log_file_name, log_file_upload)
