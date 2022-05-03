@@ -395,7 +395,7 @@ def capture():
 
         video_save = False
         streaming_width = 640
-        constant_fps = 1
+        # constant_fps = 1
 
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.7
@@ -444,10 +444,10 @@ def capture():
                     start_of_video_record = time.time()
                     frame_count = 0
 
-                if int(frame_count / time.time() - start_of_video_record) > 24:
-                    constant_fps += 1
-                elif int(frame_count / time.time() - start_of_video_record) < 24:
-                    constant_fps -= 1
+                # if int(frame_count / time.time() - start_of_video_record) > 24:
+                #     constant_fps += 1
+                # elif int(frame_count / time.time() - start_of_video_record) < 24:
+                #     constant_fps -= 1
                 out.write(img)
                 frame_count = frame_count + 1
                 if frame_count >= 1440:
@@ -479,7 +479,7 @@ def capture():
                 logger.info("Camera closed.")
                 break
 
-            cv2.waitKey(constant_fps if 60 > constant_fps > 0 else 1)
+            cv2.waitKey(30)
 
     except:
         error_handling()
