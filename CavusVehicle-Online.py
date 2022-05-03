@@ -512,6 +512,16 @@ def check_internet():
             if time.time() - check_connection > 60:
                 check_connection = time.time()
                 logger.info("Checking for internet...")
+
+            log_size = os.path.getsize(log_file_name) / (1024 * 1024)
+            if log_size > 1:
+                log_file_upload = f"{files_folder}/{get_date()}{hostname}.log"
+                logger.info(f"Trying to copy {log_file_upload}...")
+                shutil.copy(log_file_name, log_file_upload)
+                with open(log_file_name, 'r+') as file:
+                    file.truncate()
+                logger.info(f"{log_file_upload} copied to {files_folder} folder.")
+
             requests.get(url_check, timeout=timeout_to_download)
 
             connection = True
@@ -745,7 +755,7 @@ while True:
                     for garbageLocation in garbageLocations:
                         distance = geopy.distance.distance(location_gps, garbageLocation[:2]).meters
                         distances.append(distance)
-                        if distance < detectLocationDistance:
+                        if distance < detectLocationDistance and speed_in_kmh > 5:
                             id_number = garbageLocation[2]
                             if id_number == pass_the_id:
                                 continue
