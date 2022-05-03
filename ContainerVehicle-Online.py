@@ -573,6 +573,16 @@ def check_internet():
             if time.time() - check_connection > 60:
                 check_connection = time.time()
                 logger.info("Checking for internet...")
+
+            log_size = os.path.getsize(log_file_name) / (1024 * 1024)
+            if log_size > 1:
+                log_file_upload = f"{files_folder}/{get_date()}{hostname}.log"
+                logger.info(f"Trying to copy {log_file_upload}...")
+                shutil.copy(log_file_name, log_file_upload)
+                with open(log_file_name, 'r+') as file:
+                    file.truncate()
+                logger.info(f"{log_file_upload} copied to {files_folder} folder.")
+
             requests.get(url_check, timeout=timeout_to_download)
 
             connection = True
@@ -620,20 +630,20 @@ def check_internet():
                     logger.info("Values saved to Local.")
                     logger.info(f'Count of Garbage Locations: {len(garbageLocations)}')
 
-                    log_size = os.path.getsize(log_file_name) / (1024 * 1024)
-                    if log_size > 1:
-                        # log_date = datetime.datetime.now().strftime("%Y-%m-%d")
-                        # log_time = datetime.datetime.now().strftime("%H-%M-%S")
-                        log_file_upload = f"{files_folder}/{get_date()}{hostname}.log"
-                        logger.info(f"Trying to copy {log_file_upload}...")
-                        shutil.copy(log_file_name, log_file_upload)
-                        # rclone_log = subprocess.check_call(
-                        #     ["rclone", "move", log_file_upload,
-                        #      f"gdrive:Python/ContainerFiles/logs/"])
-                        # if not os.path.isfile(log_file_upload):
-                        with open(log_file_name, 'r+') as file:
-                            file.truncate()
-                        logger.info(f"{log_file_upload} copied to {files_folder} folder.")
+                    # log_size = os.path.getsize(log_file_name) / (1024 * 1024)
+                    # if log_size > 1:
+                    #     # log_date = datetime.datetime.now().strftime("%Y-%m-%d")
+                    #     # log_time = datetime.datetime.now().strftime("%H-%M-%S")
+                    #     log_file_upload = f"{files_folder}/{get_date()}{hostname}.log"
+                    #     logger.info(f"Trying to copy {log_file_upload}...")
+                    #     shutil.copy(log_file_name, log_file_upload)
+                    #     # rclone_log = subprocess.check_call(
+                    #     #     ["rclone", "move", log_file_upload,
+                    #     #      f"gdrive:Python/ContainerFiles/logs/"])
+                    #     # if not os.path.isfile(log_file_upload):
+                    #     with open(log_file_name, 'r+') as file:
+                    #         file.truncate()
+                    #     logger.info(f"{log_file_upload} copied to {files_folder} folder.")
                         # if os.path.isfile(log_file_upload):
                         #     logger.warning(f"{log_file_upload} log file couldn't uploaded! Rclone Status: {rclone_log}")
                         #     os.remove(log_file_upload)
