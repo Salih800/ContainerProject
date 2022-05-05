@@ -96,7 +96,10 @@ def read_json(json_file):
         data = json.load(open(json_file, "r"))
     except json.decoder.JSONDecodeError as json_error:
         logger.warning(f"JSONDecodeError happened at {json_file}: {json_error.pos}. Trying to save the file...")
-        data = json.loads(open(json_file).read()[:json_error.pos])
+        if json_error.pos == 0:
+            data = []
+        else:
+            data = json.loads(open(json_file).read()[:json_error.pos])
         logger.info(f"{len(data)} file info saved.")
     return data
 
