@@ -379,7 +379,7 @@ def capture():
                     os.remove(old_file)
 
         frame_width, frame_height = (640, 480)
-        set_fps = cap.get(5)
+        set_fps = 24
         video_type = "mp4"
         fourcc = "avc1"
 
@@ -482,7 +482,7 @@ def capture():
                 logger.info("Camera closed.")
                 break
 
-            cv2.waitKey(1)
+            cv2.waitKey(24)
 
     except:
         error_handling()
