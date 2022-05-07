@@ -637,6 +637,7 @@ check_connection = 0
 running_threads_check_time = 0
 santiye_location = [41.09892610381052, 28.780632617146328]
 
+vehicle_steady = False
 gps_log_time = 0
 files_folder = "files"
 detectLocationDistance = 61
@@ -793,6 +794,7 @@ while True:
                     minDistance = min(distances)
 
                     if on_the_move:
+                        vehicle_steady = False
                         logger.info(
                             f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds'
                             f' and Minimum distance = {round(minDistance, 2)} meters')
@@ -801,7 +803,9 @@ while True:
                             logger.info(f"Vehicle is in the station.")
                             time.sleep(30)
                         else:
-                            logger.info(f"The vehicle is steady. Location: {location_gps}")
+                            if not vehicle_steady:
+                                logger.info(f"The vehicle is steady. Location: {location_gps}")
+                                vehicle_steady = True
                             if minDistance > 100:
                                 time.sleep(minDistance / 20)
 
