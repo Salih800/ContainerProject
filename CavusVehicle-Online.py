@@ -637,6 +637,7 @@ check_connection = 0
 running_threads_check_time = 0
 santiye_location = [41.09892610381052, 28.780632617146328]
 
+gps_log_time = 0
 files_folder = "files"
 detectLocationDistance = 61
 threadKill = False
@@ -689,14 +690,27 @@ while True:
         with serial.Serial(port=gps_port, baudrate=9600, bytesize=8, timeout=1,
                            stopbits=serial.STOPBITS_ONE) as gps_data:
             parse_error_count = 0
-            while data_type != 'RMC':
+            invalid_data_count = 0
+            valid_gps_data = False
+            while not valid_gps_data:
                 try:
                     new_data = gps_data.readline().decode('utf-8', errors='replace')
                     if len(new_data) < 1:
                         raise ValueError("Incoming GPS Data is empty")
                     for msg in reader.next(new_data):
                         parsed_data = pynmea2.parse(str(msg))
-                        data_type = parsed_data.sentence_type
+                        if parsed_data.sentence_type == "RMC":
+                            if parsed_data.status == "A":
+                                valid_gps_data = True
+                                break
+                            else:
+                                invalid_data_count += 1
+                                if invalid_data_count >= 10:
+                                    logger.warning(f"Invalid GPS Data: {invalid_data_count}")
+                                    invalid_data_count = 0
+                                    break
+                                continue
+
                 except pynmea2.nmea.ParseError as parse_error:
                     parse_error_count = parse_error_count + 1
                     if parse_error_count >= 10:
@@ -706,24 +720,24 @@ while True:
                     continue
                 except ValueError as verr:
                     logger.warning(f"{verr}")
-                    time.sleep(5)
+                    time.sleep(1)
                     break
                 except:
                     error_handling()
                     time.sleep(5)
                     break
 
-        if data_type == "RMC":
-            data_type = str
-
-            if parsed_data.status == 'A':
+            if valid_gps_data:
                 location_gps = [parsed_data.latitude, parsed_data.longitude]
                 time_gps = str(parsed_data.timestamp)
                 date_gps = str(parsed_data.datestamp)
                 speed_in_kmh = round(parsed_data.spd_over_grnd * 1.852, 3)
                 date_local = datetime.datetime.strptime(f"{date_gps} {time_gps[:8]}",
                                                         '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=3)
-                logger.info(f'Datetime of GPS: {date_gps} {time_gps} and Speed: {round(speed_in_kmh, 2)} km/s')
+                if time.time() - gps_log_time > 60:
+                    gps_log_time = time.time()
+                    logger.info(f'Datetime of GPS: {date_gps} {time_gps} '
+                                f'and Speed: {round(speed_in_kmh, 2)} km/s')
 
                 if time.time() - checkCurrentTime > 600:
                     checkCurrentTime = time.time()
@@ -754,8 +768,8 @@ while True:
                     if distance > detectLocationDistance:
                         save_picture = False
                         logger.info(f'Garbage is out of reach. Distance is: {round(distance, 2)}')
-                    else:
-                        logger.info(f'Distance: {round(distance, 2)} meters')
+                    # else:
+                    #     logger.info(f'Distance: {round(distance, 2)} meters')
 
                 if not save_picture:
                     distances = []
