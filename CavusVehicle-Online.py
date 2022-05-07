@@ -148,7 +148,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                     if not result.status_code == 200:
                         logger.warning(f"Video Name couldn't uploaded! "
                                        f"Status Code: {result.status_code}:{result.error}")
-                        write_json(file_data, "uploaded_images.json")
+                        write_json(file_data, "uploaded_videos.json")
 
                     os.remove(file_path)
 
