@@ -407,7 +407,7 @@ class MyRequestsClass:
             self.error = result.text
         except:
             self.error = sys.exc_info()
-            # logger.error("", exc_info=True)
+            logger.error("", exc_info=True)
 
 
 def capture(camera_mode):
