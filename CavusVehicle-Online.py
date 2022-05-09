@@ -413,9 +413,14 @@ def capture():
             if not ret:
                 try:
                     camera_is = subprocess.call(["ls", "/dev/video0"])
-                    restart_system("warning", f"ret was {ret}: {camera_is}")
+                    logger.warning(f"ret was {ret}: {camera_is}")
+                    time.sleep(10)
+                    # restart_system("warning", f"ret was {ret}: {camera_is}")
                 except:
-                    restart_system("error", "Camera not Found!")
+                    logger.error("Camera not Found!", exc_info=True)
+                    time.sleep(10)
+                    # restart_system("error", "Camera not Found!")
+                break
 
             if stream:
                 try:

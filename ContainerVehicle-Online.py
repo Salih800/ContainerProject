@@ -462,9 +462,14 @@ def capture(camera_mode):
             if not ret:
                 try:
                     camera_is = subprocess.call(["ls", "/dev/video0"])
-                    restart_system("warning", f"ret was {ret}: {camera_is}")
+                    logger.warning(f"ret was {ret}: {camera_is}")
+                    time.sleep(10)
+                    # restart_system("warning", f"ret was {ret}: {camera_is}")
                 except:
-                    restart_system("error", "Camera not Found!")
+                    logger.error("Camera not Found!", exc_info=True)
+                    time.sleep(10)
+                    # restart_system("error", "Camera not Found!")
+                break
 
             if stream:
                 try:
@@ -884,7 +889,9 @@ while True:
                     take_picture = False
                     save_picture = False
                     if is_camera == 2:
-                        restart_system("error", f"save_picture was {save_picture}: {is_camera}")
+                        logger.error(f"save_picture was {save_picture}: {is_camera}")
+                        time.sleep(10)
+                        # restart_system("error", f"save_picture was {save_picture}: {is_camera}")
 
                 if minDistance >= 100 and not stream:
                     if "opencv" in check_running_threads():
