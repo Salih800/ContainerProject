@@ -378,13 +378,15 @@ def capture():
                 else:
                     os.remove(old_file)
 
-        frame_width, frame_height = (640, 480)
-        set_fps = 24
-        video_type = "mp4"
-        fourcc = "avc1"
+        frame_width, frame_height = (1280, 960)
+        record_width, record_height = (640, 480)
 
         cap.set(3, frame_width)
         cap.set(4, frame_height)
+
+        video_type = "mp4"
+        fourcc = "avc1"
+        set_fps = int(cap.get(5))
 
         logger.info(f"Camera Opening Time: {round(time.time() - oldTime, 2)} seconds")
 
@@ -447,7 +449,7 @@ def capture():
                     video_file_path = f'{recorded_files}/{filename}.{video_type}'
                     video_save = True
                     out = cv2.VideoWriter(video_file_path,
-                                          cv2.VideoWriter_fourcc(*fourcc), set_fps, (frame_width, frame_height))
+                                          cv2.VideoWriter_fourcc(*fourcc), set_fps, (record_width, record_height))
                     logger.info(f'Recording Video...')
                     start_of_video_record = time.time()
                     frame_count = 0
@@ -456,10 +458,12 @@ def capture():
                 #     constant_fps += 1
                 # elif int(frame_count / time.time() - start_of_video_record) < 24:
                 #     constant_fps -= 1
-                out.write(img)
+                out.write(imutils.resize(img, width=record_width))
                 frame_count = frame_count + 1
-                if frame_count >= 1440:
-                    logger.warning(f"Frame count is too high! {frame_count} frames. Ending the record...")
+                video_duration = time.time() - start_of_video_record
+                if frame_count >= 60 * set_fps or video_duration >= 60:
+                    logger.warning(f"Frame count is too high! {frame_count} frames {round(video_duration, 2)} seconds. "
+                                   f"Ending the record...")
                     pass_the_id = id_number
                     save_picture = False
 
@@ -487,7 +491,7 @@ def capture():
                 logger.info("Camera closed.")
                 break
 
-            cv2.waitKey(24)
+            cv2.waitKey(set_fps)
 
     except:
         error_handling()
