@@ -855,8 +855,8 @@ while True:
                             frame_count = 0
                             # id_number = garbageLocation[2]
                             take_picture = True
-                            logger.info(
-                                f'Found a close garbage. Distance is: {round(distance, 2)} meters')
+                            logger.info(f'Found a close garbage. '
+                                        f'Distance is: {round(distance, 2)} meters and garbage_id: {id_number}')
                             break
                     minDistance = min(distances)
 
@@ -898,11 +898,10 @@ while True:
                         logger.info("Closing camera...")
                         threadKill = True
 
-                elif minDistance < 100:
+                elif minDistance < 100 and pass_the_id == 0:
                     if "opencv" not in check_running_threads():
                         logger.info("Starting OpenCV")
-                        threading.Thread(target=capture, name="opencv", args=("record",),
-                                         daemon=True).start()
+                        threading.Thread(target=capture, name="opencv", args=("record",), daemon=True).start()
 
     except:
         error_handling()

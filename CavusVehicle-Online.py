@@ -650,7 +650,7 @@ threadKill = False
 filename = None
 save_picture = False
 id_number = None
-pass_the_id = None
+pass_the_id = 0
 stream = False
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 frame_count = 0
@@ -789,7 +789,8 @@ while True:
                                 continue
                             pass_the_id = 0
                             frame_count = 0
-                            logger.info(f'Found a close garbage. Distance is: {round(distance, 2)} meters')
+                            logger.info(f'Found a close garbage. '
+                                        f'Distance is: {round(distance, 2)} meters and garbage_id: {id_number}')
                             # logger.info(f'Distance Detection Interval: {detectLocationDistance}')
                             video_date = date_local.strftime('%Y-%m-%d__%H-%M-%S,,')
                             filename = f'{video_date}{location_gps[0]},{location_gps[1]},{id_number}'
@@ -819,7 +820,7 @@ while True:
                         logger.info("Closing camera...")
                         threadKill = True
 
-                elif minDistance < 100:
+                elif minDistance < 100 and pass_the_id == 0:
                     if "opencv" not in check_running_threads():
                         logger.info("Starting OpenCV")
                         threading.Thread(target=capture, name="opencv", daemon=True).start()
