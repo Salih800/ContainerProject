@@ -430,12 +430,14 @@ def capture(camera_mode):
         recording_width, recording_height = (1280, 960)
         streaming_width, streaming_height = (640, 480)
 
-        if camera_mode == "stream":
-            cap.set(3, streaming_width)
-            cap.set(4, streaming_height)
-        else:
-            cap.set(3, recording_width)
-            cap.set(4, recording_height)
+        # if camera_mode == "stream":
+        #     cap.set(3, streaming_width)
+        #     cap.set(4, streaming_height)
+        # else:
+        #     cap.set(3, recording_width)
+        #     cap.set(4, recording_height)
+        cap.set(3, recording_width)
+        cap.set(4, recording_height)
 
         logger.info(f"Camera Opening Time: {round(time.time() - old_time, 2)} seconds")
 
@@ -473,13 +475,13 @@ def capture(camera_mode):
 
             if stream:
                 try:
-                    if cap.get(3) != streaming_width:
-                        logger.info("Resizing the camera for streaming...")
-                        cap.release()
-                        cap = cv2.VideoCapture(0)
-                        cap.set(3, streaming_width)
-                        cap.set(4, streaming_height)
-                        continue
+                    # if cap.get(3) != streaming_width:
+                    #     logger.info("Resizing the camera for streaming...")
+                    #     cap.release()
+                    #     cap = cv2.VideoCapture(0)
+                    #     cap.set(3, streaming_width)
+                    #     cap.set(4, streaming_height)
+                    #     continue
 
                     date = datetime.datetime.now().strftime("%Y/%m/%d")
                     time_now = datetime.datetime.now().strftime("%H:%M:%S")
@@ -498,14 +500,14 @@ def capture(camera_mode):
                 except:
                     error_handling()
                     stream = False
-            else:
-                if cap.get(3) != 1280:
-                    logger.info("Resizing the camera for recording...")
-                    cap.release()
-                    cap = cv2.VideoCapture(0)
-                    cap.set(3, recording_width)
-                    cap.set(4, recording_height)
-                    continue
+            # else:
+                # if cap.get(3) != 1280:
+                #     logger.info("Resizing the camera for recording...")
+                #     cap.release()
+                #     cap = cv2.VideoCapture(0)
+                #     cap.set(3, recording_width)
+                #     cap.set(4, recording_height)
+                #     continue
 
             if save_picture and frame_count < 400:
                 image_file_path = f'{recorded_files}/{filename}.{image_type}'
