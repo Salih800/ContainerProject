@@ -379,7 +379,7 @@ def capture():
                     os.remove(old_file)
 
         frame_width, frame_height = (1280, 960)
-        record_width, record_height = (640, 480)
+        record_width, record_height = (1280, 960)
 
         cap.set(3, frame_width)
         cap.set(4, frame_height)
