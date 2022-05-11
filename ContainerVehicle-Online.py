@@ -554,7 +554,7 @@ def capture(camera_mode):
 def check_running_threads():
     global running_threads_check_time
     threads = [thread.name for thread in threading.enumerate()]
-    if time.time() - running_threads_check_time > 30:
+    if time.time() - running_threads_check_time > 60:
         running_threads_check_time = time.time()
         logger.info(f"Running Threads: {threads}")
     return threads
