@@ -81,6 +81,7 @@ def restart_system(restart_type=None, why=None):
     if restart_type == "error":
         logger.error(f"Restarting the system: {why}")
     subprocess.call(["sudo", "reboot"])
+    time.sleep(60)
 
 
 def write_json(json_data, json_file_name='locations.json'):
@@ -464,9 +465,12 @@ def capture(camera_mode):
             if not ret:
                 try:
                     camera_is = subprocess.call(["ls", "/dev/video0"])
-                    logger.warning(f"ret was {ret}: {camera_is}")
+                    if camera_is == 2:
+                        restart_system("warning", f"ret was {ret}: {camera_is}")
+                    else:
+                        logger.warning(f"ret was {ret}: {camera_is}")
                     time.sleep(10)
-                    # restart_system("warning", f"ret was {ret}: {camera_is}")
+
                 except:
                     logger.error("Camera not Found!", exc_info=True)
                     time.sleep(10)
@@ -893,7 +897,7 @@ while True:
                     if is_camera == 2:
                         logger.error(f"save_picture was {save_picture}: {is_camera}")
                         time.sleep(10)
-                        # restart_system("error", f"save_picture was {save_picture}: {is_camera}")
+                        restart_system("error", f"save_picture was {save_picture}: {is_camera}")
 
                 if minDistance >= 100 and not stream:
                     if "opencv" in check_running_threads():
