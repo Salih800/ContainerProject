@@ -829,9 +829,9 @@ while True:
                         logger.info("Starting OpenCV")
                         threading.Thread(target=capture, name="opencv", daemon=True).start()
 
-            elif parsed_data.status == 'V':
-                logger.warning(f'Invalid GPS info!!: {parsed_data.status}')
-                time.sleep(5)
+            # elif parsed_data.status == 'V':
+            #     logger.warning(f'Invalid GPS info!!: {parsed_data.status}')
+            #     time.sleep(5)
 
     except:
         error_handling()
