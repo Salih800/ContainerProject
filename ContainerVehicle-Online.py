@@ -128,84 +128,89 @@ def upload_data(file_type, file_path=None, file_data=None):
                 logger.warning(f"{file_path} log file couldn't uploaded! Rclone Status: {rclone_log}")
 
         elif file_type == "image":
-            detection_count = 0
-            result_list = []
-            file_name = os.path.basename(file_path)
-            with open(file_path, 'rb') as img:
-                files = {'file': (file_name, img, 'multipart/form-data', {'Expires': '0'})}
+            if os.path.getsize(file_path) != 0:
+                detection_count = 0
+                result_list = []
+                file_name = os.path.basename(file_path)
+                with open(file_path, 'rb') as img:
+                    files = {'file': (file_name, img, 'multipart/form-data', {'Expires': '0'})}
 
-                date_of_file = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
-                file_date = date_of_file.strftime("%Y-%m-%d")
-                file_time = date_of_file.strftime("%H:%M:%S")
-                file_upload_type = "garbagedevice"
+                    date_of_file = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
+                    file_date = date_of_file.strftime("%Y-%m-%d")
+                    file_time = date_of_file.strftime("%H:%M:%S")
+                    file_upload_type = "garbagedevice"
 
-                url_to_upload = url_harddrive + f"type={file_upload_type}&date={file_date}&time={file_time}"
-                result = MyRequestsClass(request_type="post", url=url_to_upload, files=files)
-                status_code = result.status_code
+                    url_to_upload = url_harddrive + f"type={file_upload_type}&date={file_date}&time={file_time}"
+                    result = MyRequestsClass(request_type="post", url=url_to_upload, files=files)
+                    status_code = result.status_code
 
-            if status_code == 200:
-                status = result.result.json()["status"]
-                if status == "success":
-                    if model is None:
-                        model_name = device_information["detection_model"]["name"]
-                        model_size = device_information["detection_model"]["size"]
+                if status_code == 200:
+                    status = result.result.json()["status"]
+                    if status == "success":
+                        if model is None:
+                            model_name = device_information["detection_model"]["name"]
+                            model_size = device_information["detection_model"]["size"]
 
-                        if not os.path.isfile(model_name):
-                            logger.warning(f"{model_name} couldn't found. Trying to download from Github...")
-                            model_file = requests.get(model_link + model_name)
-                            if model_file.status_code == 200:
-                                with open(model_name, "wb") as model_save:
-                                    model_save.write(model_file.content)
-                                logger.info(f"{model_name} downloaded and saved.")
-                            else:
-                                logger.warning(f"{model_name} couldn't downloaded. Request Error: {model_file.status_code}")
-                            logger.info(f"Updating {yolov5_reqs}...")
-                            yolov5_reqs_update = subprocess.check_call(["pip", "install", "-r", yolov5_reqs]) == 0
-                            if yolov5_reqs_update:
-                                logger.info(f"{yolov5_reqs} updated.")
-                            else:
-                                logger.warning(f"{yolov5_reqs} update failed with {yolov5_reqs_update}")
-                        model_load_time = time.time()
-                        model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_name)
-                        logger.info(f"Model loaded in {round(time.time() - model_load_time, 2)} seconds.")
-                    if model is not None:
-                        detection_result = model(file_path, model_size)
-                        detection_count = len(detection_result.pandas().xyxy[0]["name"])
-                        for i in range(detection_count):
-                            result_dict = {}
-                            for value in detect_values:
-                                if value == "confidence":
-                                    result_dict[value] = detection_result.pandas().xyxy[0][value][i]
-                                elif value == "name":
-                                    result_dict[value] = "Taken" if detection_result.pandas().xyxy[0][value][i] == "Alındı" else "empty"
+                            if not os.path.isfile(model_name):
+                                logger.warning(f"{model_name} couldn't found. Trying to download from Github...")
+                                model_file = requests.get(model_link + model_name)
+                                if model_file.status_code == 200:
+                                    with open(model_name, "wb") as model_save:
+                                        model_save.write(model_file.content)
+                                    logger.info(f"{model_name} downloaded and saved.")
                                 else:
-                                    result_dict[value] = int(detection_result.pandas().xyxy[0][value][i])
-                            result_list.append(result_dict)
+                                    logger.warning(f"{model_name} couldn't downloaded. Request Error: {model_file.status_code}")
+                                logger.info(f"Updating {yolov5_reqs}...")
+                                yolov5_reqs_update = subprocess.check_call(["pip", "install", "-r", yolov5_reqs]) == 0
+                                if yolov5_reqs_update:
+                                    logger.info(f"{yolov5_reqs} updated.")
+                                else:
+                                    logger.warning(f"{yolov5_reqs} update failed with {yolov5_reqs_update}")
+                            model_load_time = time.time()
+                            model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_name)
+                            logger.info(f"Model loaded in {round(time.time() - model_load_time, 2)} seconds.")
+                        if model is not None:
+                            detection_result = model(file_path, model_size)
+                            detection_count = len(detection_result.pandas().xyxy[0]["name"])
+                            for i in range(detection_count):
+                                result_dict = {}
+                                for value in detect_values:
+                                    if value == "confidence":
+                                        result_dict[value] = detection_result.pandas().xyxy[0][value][i]
+                                    elif value == "name":
+                                        result_dict[value] = "Taken" if detection_result.pandas().xyxy[0][value][i] == "Alındı" else "empty"
+                                    else:
+                                        result_dict[value] = int(detection_result.pandas().xyxy[0][value][i])
+                                result_list.append(result_dict)
 
-                    uploaded_file = result.result.json()["filename"]
-                    # file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
-                    file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
-                    file_data = {"file_name": uploaded_file, "date": f"{date_of_file}", "lat": file_lat,
-                                 "lng": file_lng, "id": file_id, "detection": detection_count}
+                        uploaded_file = result.result.json()["filename"]
+                        # file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
+                        file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
+                        file_data = {"file_name": uploaded_file, "date": f"{date_of_file}", "lat": file_lat,
+                                     "lng": file_lng, "id": file_id, "detection": detection_count}
 
-                    my_file_data = {"device_name": hostname, "device_type": device_type, "file_id": uploaded_file,
-                                    "date": f"{date_of_file}", "lat": file_lat, "lng": file_lng, "location_id": file_id,
-                                    "detection_count": detection_count, "result_list": result_list}
-                    write_json(my_file_data, "uploaded_files.json")
+                        my_file_data = {"device_name": hostname, "device_type": device_type, "file_id": uploaded_file,
+                                        "date": f"{date_of_file}", "lat": file_lat, "lng": file_lng, "location_id": file_id,
+                                        "detection_count": detection_count, "result_list": result_list}
+                        write_json(my_file_data, "uploaded_files.json")
 
-                    result = MyRequestsClass(request_type="post", url=url_image + hostname, json=file_data)
-                    if not result.status_code == 200:
-                        logger.warning(f"Image Name couldn't uploaded! "
-                                       f"Status Code: {result.status_code}:{result.error}")
-                        write_json(file_data, "uploaded_images.json")
+                        result = MyRequestsClass(request_type="post", url=url_image + hostname, json=file_data)
+                        if not result.status_code == 200:
+                            logger.warning(f"Image Name couldn't uploaded! "
+                                           f"Status Code: {result.status_code}:{result.error}")
+                            write_json(file_data, "uploaded_images.json")
 
-                    os.remove(file_path)
+                        os.remove(file_path)
+                    else:
+                        logger.error(f"Image file couldn't uploaded! "
+                                     f"Status Code: {result.status_code}\tStatus: {result.error}")
+
                 else:
-                    logger.error(f"Image file couldn't uploaded! "
-                                 f"Status Code: {result.status_code}\tStatus: {result.error}")
+                    logger.warning(f"Image file couldn't uploaded! Status Code: {status_code}:{result.error}")
 
             else:
-                logger.warning(f"Image file couldn't uploaded! Status Code: {status_code}:{result.error}")
+                logger.info(f"Image File size is too small: {file_path}:{os.path.getsize(file_path)}")
+                os.remove(file_path)
 
         elif file_type == "location":
 
