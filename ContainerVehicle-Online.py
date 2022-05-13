@@ -209,7 +209,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                     logger.warning(f"Image file couldn't uploaded! Status Code: {status_code}:{result.error}")
 
             else:
-                logger.info(f"Image File size is too small: {file_path}:{os.path.getsize(file_path)}")
+                logger.warning(f"Image File size is too small: {file_path}:{os.path.getsize(file_path)}")
                 os.remove(file_path)
 
         elif file_type == "location":
