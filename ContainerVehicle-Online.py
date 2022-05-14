@@ -914,6 +914,11 @@ while True:
                         logger.info("Starting OpenCV")
                         threading.Thread(target=capture, name="opencv", args=("record",), daemon=True).start()
 
+    except serial.serialutil.SerialException:
+        error_handling()
+        time.sleep(60)
+        restart_system("error", "Couldn't find the GPS Device!")
+
     except:
         error_handling()
         time.sleep(5)

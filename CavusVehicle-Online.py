@@ -833,6 +833,11 @@ while True:
             #     logger.warning(f'Invalid GPS info!!: {parsed_data.status}')
             #     time.sleep(5)
 
+    except serial.serialutil.SerialException:
+        error_handling()
+        time.sleep(60)
+        restart_system("error", "Couldn't find the GPS Device!")
+
     except:
         error_handling()
         time.sleep(5)
