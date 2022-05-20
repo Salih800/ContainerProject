@@ -413,8 +413,8 @@ class MyRequestsClass:
             self.error = result.text
         except:
             self.error = sys.exc_info()
-            logger.error("", exc_info=True)
-
+            # logger.error("", exc_info=True)
+            error_handling()
 
 def capture(camera_mode):
     try:
@@ -477,7 +477,8 @@ def capture(camera_mode):
                     time.sleep(10)
 
                 except:
-                    logger.error("Camera not Found!", exc_info=True)
+                    # logger.error("Camera not Found!", exc_info=True)
+                    error_handling()
                     time.sleep(10)
                     # restart_system("error", "Camera not Found!")
                 break
