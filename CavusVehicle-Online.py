@@ -382,8 +382,8 @@ def capture():
         frame_width, frame_height = device_information["camera-size"].split("x")
         record_width, record_height = device_information["camera-size"].split("x")
 
-        cap.set(3, frame_width)
-        cap.set(4, frame_height)
+        cap.set(3, int(frame_width))
+        cap.set(4, int(frame_height))
 
         video_type = "mp4"
         fourcc = "avc1"

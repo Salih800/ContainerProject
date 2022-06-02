@@ -442,8 +442,8 @@ def capture(camera_mode):
         # else:
         #     cap.set(3, recording_width)
         #     cap.set(4, recording_height)
-        cap.set(3, recording_width)
-        cap.set(4, recording_height)
+        cap.set(3, int(recording_width))
+        cap.set(4, int(recording_height))
 
         logger.info(f"Camera Opening Time: {round(time.time() - old_time, 2)} seconds")
 
