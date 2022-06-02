@@ -401,7 +401,7 @@ def capture():
         global pass_the_id
 
         video_save = False
-        streaming_width = 960
+        streaming_width = 640
 
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.7

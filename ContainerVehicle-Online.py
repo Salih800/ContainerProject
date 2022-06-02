@@ -434,7 +434,7 @@ def capture(camera_mode):
         cap = cv2.VideoCapture(0)
 
         recording_width, recording_height = device_information["camera-size"].split("x")
-        streaming_width, streaming_height = (960, 720)
+        streaming_width, streaming_height = (640, 480)
 
         cap.set(3, int(recording_width))
         cap.set(4, int(recording_height))
