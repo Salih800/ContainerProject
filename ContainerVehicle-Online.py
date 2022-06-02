@@ -436,12 +436,6 @@ def capture(camera_mode):
         recording_width, recording_height = device_information["camera-size"].split("x")
         streaming_width, streaming_height = (960, 720)
 
-        # if camera_mode == "stream":
-        #     cap.set(3, streaming_width)
-        #     cap.set(4, streaming_height)
-        # else:
-        #     cap.set(3, recording_width)
-        #     cap.set(4, recording_height)
         cap.set(3, int(recording_width))
         cap.set(4, int(recording_height))
 
@@ -485,14 +479,6 @@ def capture(camera_mode):
 
             if stream:
                 try:
-                    # if cap.get(3) != streaming_width:
-                    #     logger.info("Resizing the camera for streaming...")
-                    #     cap.release()
-                    #     cap = cv2.VideoCapture(0)
-                    #     cap.set(3, streaming_width)
-                    #     cap.set(4, streaming_height)
-                    #     continue
-
                     date = datetime.datetime.now().strftime("%Y/%m/%d")
                     time_now = datetime.datetime.now().strftime("%H:%M:%S")
 
@@ -510,14 +496,6 @@ def capture(camera_mode):
                 except:
                     error_handling()
                     stream = False
-            # else:
-                # if cap.get(3) != 1280:
-                #     logger.info("Resizing the camera for recording...")
-                #     cap.release()
-                #     cap = cv2.VideoCapture(0)
-                #     cap.set(3, recording_width)
-                #     cap.set(4, recording_height)
-                #     continue
 
             if save_picture and frame_count < 400:
                 image_file_path = f'{recorded_files}/{filename}.{image_type}'

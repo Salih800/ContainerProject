@@ -401,7 +401,6 @@ def capture():
 
         video_save = False
         streaming_width = 1280
-        # constant_fps = 1
 
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.7
@@ -456,10 +455,6 @@ def capture():
                     start_of_video_record = time.time()
                     frame_count = 0
 
-                # if int(frame_count / time.time() - start_of_video_record) > 24:
-                #     constant_fps += 1
-                # elif int(frame_count / time.time() - start_of_video_record) < 24:
-                #     constant_fps -= 1
                 out.write(imutils.resize(img, width=record_width))
                 frame_count = frame_count + 1
                 video_duration = time.time() - start_of_video_record
