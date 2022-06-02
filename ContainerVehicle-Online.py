@@ -885,10 +885,10 @@ while True:
                         time.sleep(10)
                         restart_system("error", f"save_picture was {save_picture}: {is_camera}")
 
-                if minDistance >= 100 and not stream:
-                    if "opencv" in check_running_threads():
-                        logger.info("Closing camera...")
-                        threadKill = True
+                # if minDistance >= 100 and not stream:
+                #     if "opencv" in check_running_threads():
+                #         logger.info("Closing camera...")
+                #         threadKill = True
 
                 elif minDistance < 100 and pass_the_id == 0:
                     if "opencv" not in check_running_threads():
