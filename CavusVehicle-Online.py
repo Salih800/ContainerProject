@@ -384,6 +384,7 @@ def capture():
 
         cap.set(3, int(frame_width))
         cap.set(4, int(frame_height))
+        cap.set(6, 1196444237.0)
 
         video_type = "mp4"
         fourcc = "avc1"
