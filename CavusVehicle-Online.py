@@ -379,8 +379,8 @@ def capture():
                 else:
                     os.remove(old_file)
 
-        frame_width, frame_height = (1280, 960)
-        record_width, record_height = (1280, 960)
+        frame_width, frame_height = device_information["camera-size"].split("x")
+        record_width, record_height = device_information["camera-size"].split("x")
 
         cap.set(3, frame_width)
         cap.set(4, frame_height)
@@ -400,7 +400,7 @@ def capture():
         global pass_the_id
 
         video_save = False
-        streaming_width = 640
+        streaming_width = 1280
         # constant_fps = 1
 
         font = cv2.FONT_HERSHEY_SIMPLEX

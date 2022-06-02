@@ -433,8 +433,8 @@ def capture(camera_mode):
         old_time = time.time()
         cap = cv2.VideoCapture(0)
 
-        recording_width, recording_height = (1280, 960)
-        streaming_width, streaming_height = (640, 480)
+        recording_width, recording_height = device_information["camera-size"].split("x")
+        streaming_width, streaming_height = (1280, 960)
 
         # if camera_mode == "stream":
         #     cap.set(3, streaming_width)
