@@ -822,7 +822,7 @@ while True:
                 #         logger.info("Closing camera...")
                 #         threadKill = True
 
-                elif minDistance < 100 and pass_the_id == 0:
+                if minDistance < 100 and pass_the_id == 0:
                     if "opencv" not in check_running_threads():
                         logger.info("Starting OpenCV")
                         threading.Thread(target=capture, name="opencv", daemon=True).start()
