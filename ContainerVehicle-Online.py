@@ -464,10 +464,11 @@ def capture(camera_mode):
             if not ret:
                 try:
                     camera_is = subprocess.call(["ls", "/dev/video0"])
-                    if camera_is == 2:
-                        restart_system("warning", f"ret was {ret}: {camera_is}")
-                    else:
-                        logger.warning(f"ret was {ret}: {camera_is}")
+                    logger.warning(f"ret was {ret}: {camera_is}")
+                    # if camera_is == 2:
+                    #     restart_system("warning", f"ret was {ret}: {camera_is}")
+                    # else:
+                    #     logger.warning(f"ret was {ret}: {camera_is}")
                     time.sleep(10)
 
                 except:
