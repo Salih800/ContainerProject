@@ -390,7 +390,7 @@ def capture():
         fourcc = "avc1"
         set_fps = int(cap.get(5))
 
-        logger.info(f"Camera Opening Time: {round(time.time() - oldTime, 2)} seconds")
+        logger.info(f"Camera Opening Time: {round(time.time() - oldTime, 2)} seconds and set_fps: {set_fps}")
 
         global save_picture
         global filename
