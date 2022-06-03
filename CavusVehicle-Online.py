@@ -817,12 +817,12 @@ while True:
                             if minDistance > 100:
                                 time.sleep(minDistance / 20)
 
-                # if minDistance >= 100 and not stream:
-                #     if "opencv" in check_running_threads():
-                #         logger.info("Closing camera...")
-                #         threadKill = True
+                if minDistance >= 100 and not stream:
+                    if "opencv" in check_running_threads():
+                        logger.info("Closing camera...")
+                        threadKill = True
 
-                if minDistance < 100 and pass_the_id == 0:
+                elif minDistance < 100 and pass_the_id == 0:
                     if "opencv" not in check_running_threads():
                         logger.info("Starting OpenCV")
                         threading.Thread(target=capture, name="opencv", daemon=True).start()
