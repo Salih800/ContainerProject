@@ -433,11 +433,11 @@ def capture(camera_mode):
         old_time = time.time()
         cap = cv2.VideoCapture(0)
 
-        recording_width, recording_height = device_information["camera-size"].split("x")
+        recording_width, recording_height = [int(i) for i in device_information["camera-size"].split("x")]
         streaming_width, streaming_height = (640, 480)
 
-        cap.set(3, int(recording_width))
-        cap.set(4, int(recording_height))
+        cap.set(3, recording_width)
+        cap.set(4, recording_height)
         cap.set(6, 1196444237.0)
 
         logger.info(f"Camera Opening Time: {round(time.time() - old_time, 2)} seconds")
