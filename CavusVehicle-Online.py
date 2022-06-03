@@ -451,7 +451,8 @@ def capture():
                     video_file_path = f'{recorded_files}/{filename}.{video_type}'
                     video_save = True
                     out = cv2.VideoWriter(video_file_path,
-                                          cv2.VideoWriter_fourcc(*fourcc), set_fps, (record_width, record_height))
+                                          cv2.VideoWriter_fourcc(*fourcc),
+                                          set_fps, (record_width, record_height))
                     logger.info(f'Recording Video...')
                     start_of_video_record = time.time()
                     frame_count = 0
