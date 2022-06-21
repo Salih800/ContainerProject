@@ -366,9 +366,10 @@ class MyRequestsClass:
 
 def capture():
     try:
+        camera_path = device_information["camera-path"]
         logger.info("Trying to open camera")
         oldTime = time.time()
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(camera_path)
         recorded_files = "recorded"
         if not os.path.isdir(recorded_files):
             os.mkdir(recorded_files)

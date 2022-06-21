@@ -418,6 +418,7 @@ class MyRequestsClass:
 
 def capture(camera_mode):
     try:
+        camera_path = device_information["camera-path"]
         recorded_files = "recorded"
         image_type = "jpg"
         if not os.path.isdir(recorded_files):
@@ -431,7 +432,7 @@ def capture(camera_mode):
 
         logger.info(f"Trying to open camera in {camera_mode} mode...")
         old_time = time.time()
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(camera_path)
 
         recording_width, recording_height = [int(i) for i in device_information["camera-size"].split("x")]
         streaming_width, streaming_height = (640, 480)
