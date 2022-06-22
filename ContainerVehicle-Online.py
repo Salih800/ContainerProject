@@ -449,6 +449,7 @@ def capture(camera_mode):
         cap.set(6, 1196444237.0)
 
         logger.info(f"Camera Opening Time: {round(time.time() - old_time, 2)} seconds")
+        logger.info(f"{cap.get(3)}x{cap.get(4)} - {cap.get(5)}")
 
         global save_picture
         global filename

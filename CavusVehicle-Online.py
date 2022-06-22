@@ -374,7 +374,7 @@ def capture():
     try:
         camera_path = device_information["camera-path"]
         logger.info("Trying to open camera")
-        oldTime = time.time()
+        old_time = time.time()
         cap = cv2.VideoCapture(camera_path)
         recorded_files = "recorded"
         if not os.path.isdir(recorded_files):
@@ -397,7 +397,7 @@ def capture():
         fourcc = "avc1"
         set_fps = int(cap.get(5))
 
-        logger.info(f"Camera Opening Time: {round(time.time() - oldTime, 2)} seconds")
+        logger.info(f"Camera Opening Time: {round(time.time() - old_time, 2)} seconds")
         logger.info(f"{cap.get(3)}x{cap.get(4)} - {cap.get(5)}")
 
         global save_picture
