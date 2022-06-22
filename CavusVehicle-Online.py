@@ -387,11 +387,12 @@ def capture():
                     os.remove(old_file)
 
         frame_width, frame_height = [int(i) for i in device_information["camera-size"].split("x")]
-        record_width, record_height = [int(i) for i in device_information["camera-size"].split("x")]
 
         cap.set(3, frame_width)
         cap.set(4, frame_height)
         cap.set(6, 1196444237.0)
+
+        record_width, record_height = [cap.get(3), cap.get(4)]
 
         video_type = "mp4"
         fourcc = "avc1"
