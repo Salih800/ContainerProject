@@ -1,6 +1,6 @@
 {
   "rpi-2": {"device_type": "garbage", "vehicle_plate": "DZL 090", "gps_port": "/dev/ttyACM0", "detection_model": {"name": "garbage_v1.pt", "size": 256}, "program": "ContainerVehicle-Online.py", "camera-path": 0, "camera-size":  "1024x768"},
-  "rpi-3": {"device_type": "garbage", "vehicle_plate": "FN 9748", "gps_port": "/dev/ttyS0", "detection_model": {"name": "garbage_v1.pt", "size": 256}, "program": "ContainerVehicle-Online.py", "camera-path": "192.168.1.2/video", "camera-size":  "1280x960"},
+  "rpi-3": {"device_type": "garbage", "vehicle_plate": "FN 9748", "gps_port": "/dev/ttyS0", "detection_model": {"name": "garbage_v1.pt", "size": 256}, "program": "ContainerVehicle-Online.py", "camera-path": "rtsp://admin:admin123@192.168.1.2:554", "camera-size":  "1280x960"},
   "rpi-4": {"device_type": "garbage-caca", "vehicle_plate": "FN 8705", "gps_port": "/dev/ttyS0", "detection_model": {"name": "garbage-caca_v1.pt", "size": 256}, "program": "ContainerVehicle-Online.py", "camera-path": 0, "camera-size":  "1280x960"},
   "rpi-5": {"device_type": "garbage-caca", "vehicle_plate": "BP 9562", "gps_port": "/dev/ttyS0", "detection_model": {"name": "garbage-caca_v1.pt", "size": 256}, "program": "ContainerVehicle-Online.py", "camera-path": 0, "camera-size":  "1280x960"},
   "rpi-6": {"device_type": "cavus", "vehicle_plate": "FN 9966", "gps_port": "/dev/ttyS0", "detection_model": {"name": "", "size": 256}, "program": "CavusVehicle-Online.py", "camera-path": 0, "camera-size":  "1280x960"},
