@@ -307,7 +307,7 @@ def check_folder():
 
 
 def listen_to_server():
-    global hostname, server, server_msg, connection, stream, threadKill
+    global hostname, server, server_msg, connection, stream, threadKill, frame_sent
     host = "93.113.96.30"
     port = 8181
     buff_size = 127
@@ -315,6 +315,8 @@ def listen_to_server():
 
     try:
         stream = False
+        frame_sent = 0
+        stream_start_time = time.time()
         logger.info("Trying to connect to Streaming Server")
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_address = (host, port)
@@ -348,6 +350,8 @@ def listen_to_server():
                     if command == "start":
                         stream = True
                         logger.info("Start to stream command received.")
+                        frame_sent = 0
+                        stream_start_time = time.time()
                         thread_list_folder = []
                         for thread_folder in threading.enumerate():
                             thread_list_folder.append(thread_folder.name)
@@ -358,7 +362,9 @@ def listen_to_server():
                     elif command == "stop":
                         stream = False
                         # threadKill = True
+                        stream_end_time = time.time() - stream_start_time
                         logger.info("Stop to stream command received.")
+                        logger.info(f"Streamed: {frame_sent} frames in {round(stream_end_time, 1)} in seconds")
                     elif command == "k":
                         if not stream:
                             server.sendall(alive_msg)
@@ -451,6 +457,7 @@ def capture(camera_mode):
         global stream
         global pass_the_id
         global take_picture
+        global frame_sent
 
         saved_pictures_count = 0
         saved_pictures_size = 0
@@ -497,6 +504,7 @@ def capture(camera_mode):
                     bosluk = b"$"
                     message = bosluk + base64.b64encode(buffer) + bosluk
                     server.sendall(message)
+                    frame_sent += 1
                 except:
                     error_handling()
                     stream = False
@@ -695,6 +703,7 @@ check_connection = 0
 running_threads_check_time = 0
 santiye_location = [41.09892610381052, 28.780632617146328]
 
+frame_sent = 0
 vehicle_steady = False
 gps_log_time = 0
 files_folder = "files"
