@@ -416,6 +416,7 @@ class MyRequestsClass:
             # logger.error("", exc_info=True)
             error_handling()
 
+
 def capture(camera_mode):
     try:
         camera_path = device_information["camera-path"]
