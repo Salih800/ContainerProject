@@ -488,7 +488,7 @@ def capture(camera_mode):
                     time.sleep(10)
                     # restart_system("error", "Camera not Found!")
                 break
-
+            img = imutils.rotate(img, device_information["rotate"])
             if stream:
                 try:
                     date = datetime.datetime.now().strftime("%Y/%m/%d")
