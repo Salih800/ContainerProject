@@ -307,7 +307,8 @@ def check_folder():
 
 
 def listen_to_server():
-    global hostname, server, server_msg, connection, stream, threadKill, frame_sent
+    global hostname, server, server_msg, connection, stream, \
+        threadKill, frame_sent, total_bytes_sent
     host = "93.113.96.30"
     port = 8181
     buff_size = 127
@@ -348,23 +349,32 @@ def listen_to_server():
 
                 for command in messages:
                     if command == "start":
-                        stream = True
-                        logger.info("Start to stream command received.")
-                        frame_sent = 0
-                        stream_start_time = time.time()
-                        thread_list_folder = []
-                        for thread_folder in threading.enumerate():
-                            thread_list_folder.append(thread_folder.name)
-                        if "opencv" not in thread_list_folder:
-                            logger.info("Starting OpenCV")
-                            threading.Thread(target=capture, name="opencv", args=("stream",), daemon=True).start()
+                        if not stream:
+                            stream = True
+                            logger.info("Start to stream command received.")
+                            frame_sent = 0
+                            total_bytes_sent = 0
+                            stream_start_time = time.time()
+                            thread_list_folder = []
+                            for thread_folder in threading.enumerate():
+                                thread_list_folder.append(thread_folder.name)
+                            if "opencv" not in thread_list_folder:
+                                logger.info("Starting OpenCV")
+                                threading.Thread(target=capture, name="opencv", args=("stream",), daemon=True).start()
+                        else:
+                            logger.warning(f"Stream was already {stream}!")
 
                     elif command == "stop":
-                        stream = False
-                        # threadKill = True
-                        stream_end_time = time.time() - stream_start_time
-                        logger.info("Stop to stream command received.")
-                        logger.info(f"Streamed: {frame_sent} frames in {round(stream_end_time, 1)} in seconds")
+                        if stream:
+                            stream = False
+                            # threadKill = True
+                            stream_end_time = time.time() - stream_start_time
+                            logger.info("Stop to stream command received.")
+                            logger.info(f"Streamed: {frame_sent} frames and {total_bytes_sent} total bytes"
+                                        f" in {round(stream_end_time, 1)} in seconds")
+                        else:
+                            logger.warning(f"Stream was already {stream}!")
+
                     elif command == "k":
                         if not stream:
                             server.sendall(alive_msg)
@@ -459,6 +469,7 @@ def capture(camera_mode):
         global pass_the_id
         global take_picture
         global frame_sent
+        global total_bytes_sent
 
         saved_pictures_count = 0
         saved_pictures_size = 0
@@ -504,6 +515,7 @@ def capture(camera_mode):
                     encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
                     bosluk = b"$"
                     message = bosluk + base64.b64encode(buffer) + bosluk
+                    total_bytes_sent += len(message)
                     server.sendall(message)
                     frame_sent += 1
                 except:
@@ -704,6 +716,7 @@ check_connection = 0
 running_threads_check_time = 0
 santiye_location = [41.09892610381052, 28.780632617146328]
 
+total_bytes_sent = 0
 frame_sent = 0
 vehicle_steady = False
 gps_log_time = 0
