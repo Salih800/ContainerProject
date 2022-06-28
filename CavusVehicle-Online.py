@@ -448,7 +448,7 @@ def capture():
                     frame = cv2.putText(frame, str(time_now), time_org, font,
                                         font_scale, color, thickness, cv2.LINE_AA)
 
-                    encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                    encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
                     bosluk = b"$"
                     message = bosluk + base64.b64encode(buffer) + bosluk
                     server.sendall(message)
