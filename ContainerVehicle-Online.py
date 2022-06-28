@@ -370,7 +370,8 @@ def listen_to_server():
                             # threadKill = True
                             stream_end_time = time.time() - stream_start_time
                             logger.info("Stop to stream command received.")
-                            logger.info(f"Streamed: {frame_sent} frames and {total_bytes_sent} total bytes"
+                            logger.info(f"Streamed: {frame_sent} frames and "
+                                        f"{round(total_bytes_sent / (1024 * 1024), 2)} total mb"
                                         f" in {round(stream_end_time, 1)} in seconds")
                         else:
                             logger.warning(f"Stream was already {stream}!")
