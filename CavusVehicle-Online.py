@@ -410,7 +410,7 @@ def capture():
         set_fps = int(cap.get(5))
 
         logger.info(f"Camera Opening Time: {round(time.time() - old_time, 2)} seconds")
-        logger.info(f"{cap.get(3)}x{cap.get(4)} - {cap.get(5)}")
+        logger.info(f"Resolution: {record_width}x{record_height} - FPS: {cap.get(5)}")
 
         global save_picture
         global filename

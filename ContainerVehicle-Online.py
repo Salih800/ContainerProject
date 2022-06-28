@@ -452,15 +452,17 @@ def capture(camera_mode):
         old_time = time.time()
         cap = cv2.VideoCapture(camera_path)
 
-        recording_width, recording_height = [int(i) for i in device_information["camera-size"].split("x")]
-        streaming_width, streaming_height = (640, 480)
+        frame_width, frame_height = [int(i) for i in device_information["camera-size"].split("x")]
+        streaming_width = 640
 
-        cap.set(3, recording_width)
-        cap.set(4, recording_height)
+        cap.set(3, frame_width)
+        cap.set(4, frame_height)
         cap.set(6, 1196444237.0)
 
+        record_width, record_height = [int(cap.get(3)), int(cap.get(4))]
+
         logger.info(f"Camera Opening Time: {round(time.time() - old_time, 2)} seconds")
-        logger.info(f"{cap.get(3)}x{cap.get(4)} - {cap.get(5)}")
+        logger.info(f"Resolution: {record_width}x{record_height} - FPS: {cap.get(5)}")
 
         global save_picture
         global filename
@@ -474,6 +476,7 @@ def capture(camera_mode):
 
         saved_pictures_count = 0
         saved_pictures_size = 0
+
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.7
         thickness = 2
