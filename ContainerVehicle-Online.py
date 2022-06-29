@@ -912,7 +912,7 @@ while True:
                     if is_camera == 2:
                         logger.error(f"save_picture was {save_picture}: {is_camera}")
                         time.sleep(10)
-                        restart_system("error", f"save_picture was {save_picture}: {is_camera}")
+                        # restart_system("error", f"save_picture was {save_picture}: {is_camera}")
 
                 if minDistance >= 100 and not stream:
                     if "opencv" in check_running_threads():
