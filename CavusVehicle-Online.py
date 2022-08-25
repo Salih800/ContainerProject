@@ -796,22 +796,22 @@ while True:
             valid_gps_data = False
             while not valid_gps_data:
                 try:
-                    new_data = gps_data.readline().decode('utf-8', errors='replace')
+                    new_data = gps_data.readline().decode()
                     if len(new_data) < 1:
                         raise ValueError("Incoming GPS Data is empty")
-                    for msg in reader.next(new_data):
-                        parsed_data = pynmea2.parse(str(msg))
-                        if parsed_data.sentence_type == "RMC":
-                            if parsed_data.status == "A":
-                                valid_gps_data = True
+
+                    parsed_data = pynmea2.parse(new_data)
+                    if parsed_data.sentence_type == "RMC":
+                        if parsed_data.status == "A":
+                            valid_gps_data = True
+                            break
+                        else:
+                            invalid_data_count += 1
+                            if invalid_data_count >= 10:
+                                logger.warning(f"Invalid GPS Data: {invalid_data_count}")
+                                invalid_data_count = 0
                                 break
-                            else:
-                                invalid_data_count += 1
-                                if invalid_data_count >= 10:
-                                    logger.warning(f"Invalid GPS Data: {invalid_data_count}")
-                                    invalid_data_count = 0
-                                    break
-                                continue
+                            continue
 
                 except pynmea2.nmea.ParseError as parse_error:
                     parse_error_count = parse_error_count + 1
