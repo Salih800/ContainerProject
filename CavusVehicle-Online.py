@@ -386,7 +386,7 @@ class MyRequestsClass:
 
 
 def draw_text_and_rectangle(frame, text, x=0, y=0, font_scale=15, img_color=(255, 255, 255), rect_color=(0, 0, 0)):
-    font = ImageFont.truetype(r'arial.ttf', font_scale)
+    font = ImageFont.load_default()
     img = Image.fromarray(frame)
     draw = ImageDraw.Draw(img)
 
