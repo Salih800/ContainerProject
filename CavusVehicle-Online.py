@@ -479,7 +479,7 @@ def capture():
         global pass_the_id
         global frame_sent
         global total_bytes_sent
-        global drawable_gps_data
+        # global drawable_gps_data
 
         video_save = False
         streaming_width = 720
@@ -519,7 +519,6 @@ def capture():
                                                     x=20, y=20)
                     if drawable_gps_data is not None:
                         frame = draw_text_and_rectangle(frame, drawable_gps_data, x=20, y=frame.shape[0] - 40)
-                        # drawable_gps_data = None
 
                     # frame = cv2.putText(frame, str(date), date_org, font,
                     #                     font_scale, color, thickness, cv2.LINE_AA)
