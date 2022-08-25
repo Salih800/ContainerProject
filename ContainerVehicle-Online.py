@@ -2,7 +2,6 @@ import base64
 import datetime
 import glob
 import hashlib
-# import io
 import json
 import logging
 import os
@@ -12,6 +11,7 @@ import subprocess
 import sys
 import threading
 import time
+import math
 
 hostname = subprocess.check_output(["hostname"]).decode("utf-8").strip("\n")
 requirements = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/requirements.txt"
@@ -33,7 +33,6 @@ logger.debug("")
 logger.info("System Started.")
 
 try:
-    import geopy.distance
     import pynmea2
     import requests
     import imutils
@@ -41,6 +40,8 @@ try:
     import cv2
     import torch
     from cv2 import imwrite as my_imwrite
+    import numpy as np
+    from PIL import Image, ImageDraw, ImageFont
 
 except ModuleNotFoundError as module:
     logger.warning("Module not found: ", module.name)
@@ -111,6 +112,41 @@ def read_json(json_file):
     return data
 
 
+def draw_text_and_rectangle(frame, text, x=0, y=0, font_scale=15, img_color=(255, 255, 255), rect_color=(0, 0, 0)):
+    font = ImageFont.load_default()
+    img = Image.fromarray(frame)
+    draw = ImageDraw.Draw(img)
+
+    w, h = font.getsize(text)
+    w, h = w + 1, h + 1
+
+    draw.rectangle((x, y, x + w, y + h), fill=rect_color)
+
+    draw.text((x, y), text, fill=img_color, font=font)
+
+    return np.array(img)
+
+
+def calculate_distance(location1, location2):
+    lat1, lon1 = location1[0], location1[1]
+    lat2, lon2 = location2[0], location2[1]
+    radius = 6371e3
+    phi1 = lat1 * math.pi / 180
+    phi2 = lat2 * math.pi / 180
+    delta_phi = (lat2 - lat1) * math.pi / 180
+    delta_lambda = (lon2 - lon1) * math.pi / 180
+    a = math.sin(delta_phi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return radius * c
+
+
+def get_drawable_gps_data(parsed_gps_data):
+    return (f"{round(parsed_gps_data.latitude, 6)}{parsed_gps_data.lat_dir},"
+            f"{round(parsed_gps_data.longitude, 6)}{parsed_gps_data.lon_dir},"
+            f"{'None' if parsed_gps_data.true_course is None else parsed_gps_data.true_course}"
+            f"{str(int(parsed_gps_data.spd_over_grnd * 1.852)).zfill(3)}kmh")
+
+
 def upload_data(file_type, file_path=None, file_data=None):
     # timeout_to_upload = 60
     detect_values = ["name", "class", "confidence", "xmin", "ymin", "xmax", "ymax"]
@@ -159,7 +195,8 @@ def upload_data(file_type, file_path=None, file_data=None):
                                         model_save.write(model_file.content)
                                     logger.info(f"{model_name} downloaded and saved.")
                                 else:
-                                    logger.warning(f"{model_name} couldn't downloaded. Request Error: {model_file.status_code}")
+                                    logger.warning(f"{model_name} couldn't downloaded. "
+                                                   f"Request Error: {model_file.status_code}")
                                 logger.info(f"Updating {yolov5_reqs}...")
                                 yolov5_reqs_update = subprocess.check_call(["pip", "install", "-r", yolov5_reqs]) == 0
                                 if yolov5_reqs_update:
@@ -178,7 +215,8 @@ def upload_data(file_type, file_path=None, file_data=None):
                                     if value == "confidence":
                                         result_dict[value] = detection_result.pandas().xyxy[0][value][i]
                                     elif value == "name":
-                                        result_dict[value] = "Taken" if detection_result.pandas().xyxy[0][value][i] == "Alındı" else "empty"
+                                        result_dict[value] = "Taken" if detection_result.pandas().xyxy[0][value][
+                                                                            i] == "Alındı" else "empty"
                                     else:
                                         result_dict[value] = int(detection_result.pandas().xyxy[0][value][i])
                                 result_list.append(result_dict)
@@ -190,7 +228,8 @@ def upload_data(file_type, file_path=None, file_data=None):
                                      "lng": file_lng, "id": file_id, "detection": detection_count}
 
                         my_file_data = {"device_name": hostname, "device_type": device_type, "file_id": uploaded_file,
-                                        "date": f"{date_of_file}", "lat": file_lat, "lng": file_lng, "location_id": file_id,
+                                        "date": f"{date_of_file}", "lat": file_lat, "lng": file_lng,
+                                        "location_id": file_id,
                                         "detection_count": detection_count, "result_list": result_list}
                         write_json(my_file_data, "uploaded_files.json")
 
@@ -247,7 +286,8 @@ def upload_data(file_type, file_path=None, file_data=None):
                 uploaded_files_time = datetime.datetime.now().strftime("%H-%M-%S")
                 uploaded_files_name = f"{uploaded_files_date}_{uploaded_files_time}_{hostname}.json"
                 shutil.copy(file_path, uploaded_files_name)
-                rclone_call = subprocess.check_call(["rclone", "move", uploaded_files_name, f"gdrive:Python/ContainerFiles/files/"])
+                rclone_call = subprocess.check_call(["rclone", "move", uploaded_files_name,
+                                                     f"gdrive:Python/ContainerFiles/files/"])
                 if os.path.isfile(uploaded_files_name):
                     os.remove(uploaded_files_name)
                     logger.info(f"Rclone failed with {rclone_call}")
@@ -273,7 +313,7 @@ def file_size_unit(size: int, elapsed_time):
         if size < 1024:
             break
         size /= 1024
-    return f"{size:.1f}{unit}", f"{size/elapsed_time:.2f}{unit}/s"
+    return f"{size:.1f}{unit}", f"{size / elapsed_time:.2f}{unit}/s"
 
 
 def check_folder():
@@ -300,7 +340,7 @@ def check_folder():
             upload_end_time = round(time.time() - upload_start_time, 2)
             upload_end_size, ratio = file_size_unit(upload_start_size - get_folder_size(files_folder), upload_end_time)
             logger.info(f"{total_uploaded_file} files and {upload_end_size} "
-                         f"uploaded in {upload_end_time} seconds. Ratio: {ratio}")
+                        f"uploaded in {upload_end_time} seconds. Ratio: {ratio}")
         time.sleep(60)
     except:
         error_handling()
@@ -477,14 +517,6 @@ def capture(camera_mode):
         saved_pictures_count = 0
         saved_pictures_size = 0
 
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.7
-        thickness = 2
-        color = (255, 0, 0)
-
-        date_org = (streaming_width - 150, 20)
-        time_org = (streaming_width - 130, 45)
-
         while True:
             ret, img = cap.read()
             if not ret:
@@ -506,15 +538,13 @@ def capture(camera_mode):
             img = imutils.rotate(img, device_information["rotate"])
             if stream:
                 try:
-                    date = datetime.datetime.now().strftime("%Y/%m/%d")
-                    time_now = datetime.datetime.now().strftime("%H:%M:%S")
-
                     frame = imutils.resize(img, width=streaming_width)
 
-                    frame = cv2.putText(frame, str(date), date_org, font,
-                                        font_scale, color, thickness, cv2.LINE_AA)
-                    frame = cv2.putText(frame, str(time_now), time_org, font,
-                                        font_scale, color, thickness, cv2.LINE_AA)
+                    frame = draw_text_and_rectangle(frame,
+                                                    datetime.datetime.now().strftime("%Y-%m-%d  %H:%M:%S"),
+                                                    x=20, y=20)
+                    if drawable_gps_data is not None:
+                        frame = draw_text_and_rectangle(frame, drawable_gps_data, x=20, y=frame.shape[0] - 40)
 
                     encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
                     bosluk = b"$"
@@ -556,7 +586,8 @@ def capture(camera_mode):
             if threadKill:
                 if saved_pictures_count > 0:
                     saved_pictures_size = round(saved_pictures_size / 1024, 2)
-                    logger.info(f"Total {saved_pictures_count} images of {saved_pictures_size} Mb in size were recorded.")
+                    logger.info(
+                        f"Total {saved_pictures_count} images of {saved_pictures_size} Mb in size were recorded.")
                 threadKill = False
                 cap.release()
                 logger.info("Camera closed.")
@@ -671,9 +702,9 @@ def check_internet():
                     #     with open(log_file_name, 'r+') as file:
                     #         file.truncate()
                     #     logger.info(f"{log_file_upload} copied to {files_folder} folder.")
-                        # if os.path.isfile(log_file_upload):
-                        #     logger.warning(f"{log_file_upload} log file couldn't uploaded! Rclone Status: {rclone_log}")
-                        #     os.remove(log_file_upload)
+                    # if os.path.isfile(log_file_upload):
+                    #     logger.warning(f"{log_file_upload} log file couldn't uploaded! Rclone Status: {rclone_log}")
+                    #     os.remove(log_file_upload)
 
                     pTimeCheck = time.time()
 
@@ -699,8 +730,6 @@ url_of_project = "https://raw.githubusercontent.com/Salih800/ContainerProject/ma
 device_informations = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/device_informations.json"
 model_link = "https://github.com/Salih800/ContainerProject/raw/main/models/"
 destination = os.path.basename(__file__)
-data_type = str
-reader = pynmea2.NMEAStreamReader()
 pTimeUpload = 0
 pTimeGPS = 0
 saveLocationTime = 0
@@ -737,6 +766,7 @@ server_msg = "wait"
 pass_the_id = 0
 old_location_gps = [0, 0]
 model = None
+drawable_gps_data = None
 
 if not os.path.isdir(files_folder):
     logger.info(f"Making {files_folder} folder")
@@ -780,22 +810,21 @@ while True:
             valid_gps_data = False
             while not valid_gps_data:
                 try:
-                    new_data = gps_data.readline().decode('utf-8', errors='replace')
+                    new_data = gps_data.readline().decode()
                     if len(new_data) < 1:
                         raise ValueError("Incoming GPS Data is empty")
-                    for msg in reader.next(new_data):
-                        parsed_data = pynmea2.parse(str(msg))
-                        if parsed_data.sentence_type == "RMC":
-                            if parsed_data.status == "A":
-                                valid_gps_data = True
+                    parsed_data = pynmea2.parse(new_data)
+                    if parsed_data.sentence_type == "RMC":
+                        if parsed_data.status == "A":
+                            valid_gps_data = True
+                            break
+                        else:
+                            invalid_data_count += 1
+                            if invalid_data_count >= 10:
+                                logger.warning(f"Invalid GPS Data: {invalid_data_count}")
+                                invalid_data_count = 0
                                 break
-                            else:
-                                invalid_data_count += 1
-                                if invalid_data_count >= 10:
-                                    logger.warning(f"Invalid GPS Data: {invalid_data_count}")
-                                    invalid_data_count = 0
-                                    break
-                                continue
+                            continue
 
                 except pynmea2.nmea.ParseError as parse_error:
                     parse_error_count = parse_error_count + 1
@@ -814,6 +843,7 @@ while True:
                     break
 
             if valid_gps_data:
+                drawable_gps_data = get_drawable_gps_data(parsed_data)
                 location_gps = [parsed_data.latitude, parsed_data.longitude]
                 time_gps = str(parsed_data.timestamp)
                 date_gps = str(parsed_data.datestamp)
@@ -836,7 +866,7 @@ while True:
                 if time.time() - saveLocationTime > 5:
                     saveLocationTime = time.time()
 
-                    if geopy.distance.distance(location_gps, old_location_gps).meters > 20:
+                    if calculate_distance(location_gps, old_location_gps) > 20:
                         on_the_move = True
                         location_data = {"date": date_local.strftime("%Y-%m-%d %H:%M:%S"),
                                          "lat": location_gps[0],
@@ -854,7 +884,7 @@ while True:
                         on_the_move = False
 
                 if take_picture:
-                    distance = geopy.distance.distance(location_gps, garbageLocation[:2]).meters
+                    distance = calculate_distance(location_gps, garbageLocation[:2])
                     if distance > detectLocationDistance:
                         take_picture = False
                         logger.info(f'Garbage is out of reach. Distance is: {round(distance, 2)}')
@@ -866,7 +896,7 @@ while True:
                     distances = []
                     pTimeCheckLocations = time.time()
                     for garbageLocation in garbageLocations:
-                        distance = geopy.distance.distance(location_gps, garbageLocation[:2]).meters
+                        distance = calculate_distance(location_gps, garbageLocation[:2])
                         distances.append(distance)
                         if distance < detectLocationDistance:
                             id_number = garbageLocation[2]
@@ -887,7 +917,7 @@ while True:
                             f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds'
                             f' and Minimum distance = {round(minDistance, 2)} meters')
                     if not on_the_move:
-                        if geopy.distance.distance(location_gps, santiye_location).meters < 200:
+                        if calculate_distance(location_gps, santiye_location) < 200:
                             logger.info(f"Vehicle is in the station.")
                             time.sleep(30)
                         else:
@@ -895,7 +925,7 @@ while True:
                                 logger.info(f"The vehicle is steady. Location: {location_gps}")
                                 vehicle_steady = True
                             if minDistance > 100:
-                                time.sleep(minDistance/20)
+                                time.sleep(minDistance / 20)
 
                 if not save_picture:
                     if take_picture and speed_in_kmh < 5.0:

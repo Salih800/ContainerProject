@@ -4,6 +4,7 @@ import glob
 import hashlib
 import json
 import logging
+import math
 import os
 import shutil
 import socket
@@ -401,9 +402,6 @@ def draw_text_and_rectangle(frame, text, x=0, y=0, font_scale=15, img_color=(255
 
 
 def calculate_distance(location1, location2):
-    import math
-    # lat1, lon1 = location1["lat"], location1["lng"]
-    # lat2, lon2 = location2["lat"], location2["lng"]
     lat1, lon1 = location1[0], location1[1]
     lat2, lon2 = location2[0], location2[1]
     radius = 6371e3
@@ -419,6 +417,7 @@ def calculate_distance(location1, location2):
 def get_drawable_gps_data(parsed_gps_data):
     return (f"{round(parsed_gps_data.latitude, 6)}{parsed_gps_data.lat_dir},"
             f"{round(parsed_gps_data.longitude, 6)}{parsed_gps_data.lon_dir},"
+            f"{'None' if parsed_gps_data.true_course is None else parsed_gps_data.true_course}"
             f"{str(int(parsed_gps_data.spd_over_grnd * 1.852)).zfill(3)}kmh")
 
 
@@ -484,14 +483,6 @@ def capture():
         video_save = False
         streaming_width = 720
 
-        # font = cv2.FONT_HERSHEY_SIMPLEX
-        # font_scale = 0.7
-        # thickness = 2
-        # color = (255, 0, 0)
-        #
-        # date_org = (streaming_width - 150, 20)
-        # time_org = (streaming_width - 130, 45)
-
         while True:
             ret, img = cap.read()
             if not ret:
@@ -509,8 +500,6 @@ def capture():
 
             if stream:
                 try:
-                    # date = datetime.datetime.now().strftime("%Y/%m/%d")
-                    # time_now = datetime.datetime.now().strftime("%H:%M:%S")
 
                     frame = imutils.resize(img, width=streaming_width)
 
@@ -519,11 +508,6 @@ def capture():
                                                     x=20, y=20)
                     if drawable_gps_data is not None:
                         frame = draw_text_and_rectangle(frame, drawable_gps_data, x=20, y=frame.shape[0] - 40)
-
-                    # frame = cv2.putText(frame, str(date), date_org, font,
-                    #                     font_scale, color, thickness, cv2.LINE_AA)
-                    # frame = cv2.putText(frame, str(time_now), time_org, font,
-                    #                     font_scale, color, thickness, cv2.LINE_AA)
 
                     encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
                     bosluk = b"$"
@@ -714,8 +698,6 @@ downloaded = "downloaded_file.py"
 url_of_project = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/"
 device_informations = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/device_informations.json"
 destination = os.path.basename(__file__)
-data_type = str
-reader = pynmea2.NMEAStreamReader()
 pTimeUpload = 0
 pTimeGPS = 0
 saveLocationTime = 0
@@ -898,9 +880,8 @@ while True:
 
                     if on_the_move:
                         vehicle_steady = False
-                        logger.info(
-                            f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds'
-                            f' and Minimum distance = {round(minDistance, 2)} meters')
+                        logger.info(f'Minimum distance = {round(minDistance, 2)} meters')
+
                     if not on_the_move:
                         if calculate_distance(location_gps, santiye_location) < 200:
                             logger.info(f"Vehicle is in the station.")
