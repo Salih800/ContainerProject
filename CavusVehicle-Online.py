@@ -419,7 +419,6 @@ def calculate_distance(location1, location2):
 def get_drawable_gps_data(parsed_gps_data):
     return (f"{round(parsed_gps_data.latitude, 6)}{parsed_gps_data.lat_dir},"
             f"{round(parsed_gps_data.longitude, 6)}{parsed_gps_data.lon_dir},"
-            f"{str(int(parsed_gps_data.true_course)).zfill(3)},"
             f"{str(int(parsed_gps_data.spd_over_grnd * 1.852)).zfill(3)}kmh")
 
 
