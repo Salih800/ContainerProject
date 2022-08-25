@@ -402,8 +402,10 @@ def draw_text_and_rectangle(frame, text, x=0, y=0, font_scale=15, img_color=(255
 
 def calculate_distance(location1, location2):
     import math
-    lat1, lon1 = location1["lat"], location1["lng"]
-    lat2, lon2 = location2["lat"], location2["lng"]
+    # lat1, lon1 = location1["lat"], location1["lng"]
+    # lat2, lon2 = location2["lat"], location2["lng"]
+    lat1, lon1 = location1[0], location1[1]
+    lat2, lon2 = location2[0], location2[1]
     radius = 6371e3
     phi1 = lat1 * math.pi / 180
     phi2 = lat2 * math.pi / 180
