@@ -31,12 +31,14 @@ logger.debug("")
 logger.info("System Started.")
 
 try:
-    import geopy.distance
+    # import geopy.distance
     import pynmea2
     import requests
     import imutils
     import serial
     import cv2
+    import numpy as np
+    from PIL import Image, ImageDraw, ImageFont
 
 except ModuleNotFoundError as module:
     logger.warning("Module not found: ", module.name)
@@ -46,6 +48,7 @@ except ModuleNotFoundError as module:
         logger.info("Modules installed")
     else:
         logger.warning("Module install failed!")
+
 
 def hash_check(file, blocksize=None):
     if blocksize is None:
@@ -76,6 +79,7 @@ def restart_system(restart_type=None, why=None):
     if restart_type == "error":
         logger.error(f"Restarting the system: {why}")
     subprocess.call(["sudo", "reboot"])
+
 
 def write_json(json_data, json_file_name='locations.json'):
     json_file_path = f"{files_folder}/{json_file_name}"
@@ -220,7 +224,7 @@ def file_size_unit(size: int, elapsed_time):
         if size < 1024:
             break
         size /= 1024
-    return f"{size:.1f}{unit}", f"{size/elapsed_time:.2f}{unit}/s"
+    return f"{size:.1f}{unit}", f"{size / elapsed_time:.2f}{unit}/s"
 
 
 def check_folder():
@@ -247,7 +251,7 @@ def check_folder():
             upload_end_time = round(time.time() - upload_start_time, 2)
             upload_end_size, ratio = file_size_unit(upload_start_size - get_folder_size(files_folder), upload_end_time)
             logger.info(f"{total_uploaded_file} files and {upload_end_size} "
-                         f"uploaded in {upload_end_time} seconds. Ratio: {ratio}")
+                        f"uploaded in {upload_end_time} seconds. Ratio: {ratio}")
         time.sleep(60)
     except:
         error_handling()
@@ -318,8 +322,8 @@ def listen_to_server():
                             stream_end_time = time.time() - stream_start_time
                             logger.info("Stop to stream command received.")
                             logger.info(f"Streamed: {frame_sent} frames and "
-                                        f"total {round(total_bytes_sent/(1024*1024), 2)} mb"
-                                        f" in {round(stream_end_time,1)} in seconds")
+                                        f"total {round(total_bytes_sent / (1024 * 1024), 2)} mb"
+                                        f" in {round(stream_end_time, 1)} in seconds")
                         else:
                             logger.warning(f"Stream was already {stream}!")
 
@@ -381,6 +385,60 @@ class MyRequestsClass:
             error_handling()
 
 
+def draw_text_and_rectangle(frame, text, x=0, y=0, font_scale=15, img_color=(255, 255, 255), rect_color=(0, 0, 0)):
+    font = ImageFont.truetype(r'arial.ttf', font_scale)
+    img = Image.fromarray(frame)
+    draw = ImageDraw.Draw(img)
+
+    w, h = font.getsize(text)
+    w, h = w + 1, h + 1
+
+    draw.rectangle((x, y, x + w, y + h), fill=rect_color)
+
+    draw.text((x, y), text, fill=img_color, font=font)
+
+    return np.array(img)
+
+
+def calculate_distance(location1, location2):
+    import math
+    lat1, lon1 = location1["lat"], location1["lng"]
+    lat2, lon2 = location2["lat"], location2["lng"]
+    radius = 6371e3
+    phi1 = lat1 * math.pi / 180
+    phi2 = lat2 * math.pi / 180
+    delta_phi = (lat2 - lat1) * math.pi / 180
+    delta_lambda = (lon2 - lon1) * math.pi / 180
+    a = math.sin(delta_phi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return radius * c
+
+
+def get_drawable_gps_data(parsed_gps_data):
+    return (f"{round(parsed_gps_data.latitude, 6)}{parsed_gps_data.lat_dir},"
+            f"{round(parsed_gps_data.longitude, 6)}{parsed_gps_data.lon_dir},"
+            f"{str(int(parsed_gps_data.true_course)).zfill(3)},"
+            f"{str(int(parsed_gps_data.spd_over_grnd * 1.852)).zfill(3)}kmh")
+
+
+# def check_location_and_speed(gps_data, locations, maximum_distance=50, speed_limit=5, on_the_move=False):
+#     min_distance = float("inf")
+#     closest_location = None
+#
+#     for loc in locations:
+#         distance = calculate_distance(gps_data.gps_location, loc)
+#         if distance < min_distance:
+#             min_distance = distance
+#             closest_location = loc
+#     if maximum_distance > min_distance:
+#         if on_the_move:
+#             if gps_data.speed_in_kmh > speed_limit:
+#                 return closest_location["id"]
+#         else:
+#             if gps_data.speed_in_kmh < speed_limit:
+#                 return closest_location["id"]
+
+
 def capture():
     try:
         camera_path = device_information["camera-path"]
@@ -414,24 +472,24 @@ def capture():
 
         global save_picture
         global filename
-        global picture_folder
         global threadKill
         global frame_count
         global stream
         global pass_the_id
         global frame_sent
         global total_bytes_sent
+        global drawable_gps_data
 
         video_save = False
-        streaming_width = 640
+        streaming_width = 720
 
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.7
-        thickness = 2
-        color = (255, 0, 0)
-
-        date_org = (streaming_width - 150, 20)
-        time_org = (streaming_width - 130, 45)
+        # font = cv2.FONT_HERSHEY_SIMPLEX
+        # font_scale = 0.7
+        # thickness = 2
+        # color = (255, 0, 0)
+        #
+        # date_org = (streaming_width - 150, 20)
+        # time_org = (streaming_width - 130, 45)
 
         while True:
             ret, img = cap.read()
@@ -450,15 +508,22 @@ def capture():
 
             if stream:
                 try:
-                    date = datetime.datetime.now().strftime("%Y/%m/%d")
-                    time_now = datetime.datetime.now().strftime("%H:%M:%S")
+                    # date = datetime.datetime.now().strftime("%Y/%m/%d")
+                    # time_now = datetime.datetime.now().strftime("%H:%M:%S")
 
                     frame = imutils.resize(img, width=streaming_width)
 
-                    frame = cv2.putText(frame, str(date), date_org, font,
-                                        font_scale, color, thickness, cv2.LINE_AA)
-                    frame = cv2.putText(frame, str(time_now), time_org, font,
-                                        font_scale, color, thickness, cv2.LINE_AA)
+                    frame = draw_text_and_rectangle(frame,
+                                                    datetime.datetime.now().strftime("%Y-%m-%d  %H:%M:%S"),
+                                                    x=20, y=20)
+                    if drawable_gps_data is not None:
+                        frame = draw_text_and_rectangle(frame, drawable_gps_data, x=20, y=frame.shape[0] - 40)
+                        drawable_gps_data = None
+
+                    # frame = cv2.putText(frame, str(date), date_org, font,
+                    #                     font_scale, color, thickness, cv2.LINE_AA)
+                    # frame = cv2.putText(frame, str(time_now), time_org, font,
+                    #                     font_scale, color, thickness, cv2.LINE_AA)
 
                     encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
                     bosluk = b"$"
@@ -498,11 +563,12 @@ def capture():
                     if os.path.isfile(video_file_path):
                         video_record_time = round(time.time() - start_of_video_record, 2)
                         file_size = round(os.path.getsize(video_file_path) / (1024 * 1024), 2)
-                        if file_size < (1/1024):
+                        if file_size < (1 / 1024):
                             logger.warning(f"Recorded file size is too small! File size: {file_size} MB")
                             os.remove(video_file_path)
                         else:
-                            logger.info(f"Recorded video FileSize={file_size} MB in {video_record_time} seconds and Total {frame_count} frames: {filename}")
+                            logger.info(f"Recorded video FileSize={file_size} MB in {video_record_time} seconds "
+                                        f"and Total {frame_count} frames: {filename}")
                             shutil.move(video_file_path, files_folder)
 
                     else:
@@ -514,7 +580,7 @@ def capture():
                 logger.info("Camera closed.")
                 break
 
-            cv2.waitKey(set_fps)
+            # cv2.waitKey(set_fps)
 
     except:
         error_handling()
@@ -686,6 +752,7 @@ frame_count = 0
 server_msg = "wait"
 old_location_gps = [0, 0]
 on_the_move = False
+drawable_gps_data = None
 
 if not os.path.isdir(files_folder):
     logger.info(f"Making {files_folder} folder")
@@ -763,6 +830,7 @@ while True:
                     break
 
             if valid_gps_data:
+                drawable_gps_data = get_drawable_gps_data(parsed_data)
                 location_gps = [parsed_data.latitude, parsed_data.longitude]
                 time_gps = str(parsed_data.timestamp)
                 date_gps = str(parsed_data.datestamp)
@@ -783,7 +851,7 @@ while True:
                 if time.time() - saveLocationTime > 5:
                     saveLocationTime = time.time()
 
-                    if geopy.distance.distance(location_gps, old_location_gps).meters > 20:
+                    if calculate_distance(location_gps, old_location_gps) > 20:
                         on_the_move = True
                         location_data = {"date": date_local.strftime("%Y-%m-%d %H:%M:%S"), "lat": location_gps[0],
                                          "lng": location_gps[1], "speed": speed_in_kmh}
@@ -799,7 +867,7 @@ while True:
                         on_the_move = False
 
                 if save_picture:
-                    distance = geopy.distance.distance(location_gps, garbageLocation[:2]).meters
+                    distance = calculate_distance(location_gps, garbageLocation[:2])
                     if distance > detectLocationDistance:
                         save_picture = False
                         logger.info(f'Garbage is out of reach. Distance is: {round(distance, 2)}')
@@ -810,7 +878,7 @@ while True:
                     distances = []
                     pTimeCheckLocations = time.time()
                     for garbageLocation in garbageLocations:
-                        distance = geopy.distance.distance(location_gps, garbageLocation[:2]).meters
+                        distance = calculate_distance(location_gps, garbageLocation[:2])
                         distances.append(distance)
                         if distance < detectLocationDistance and speed_in_kmh > 5:
                             id_number = garbageLocation[2]
@@ -834,7 +902,7 @@ while True:
                             f'Total location check time {round(time.time() - pTimeCheckLocations, 2)} seconds'
                             f' and Minimum distance = {round(minDistance, 2)} meters')
                     if not on_the_move:
-                        if geopy.distance.distance(location_gps, santiye_location).meters < 200:
+                        if calculate_distance(location_gps, santiye_location) < 200:
                             logger.info(f"Vehicle is in the station.")
                             time.sleep(30)
                         else:
@@ -853,7 +921,8 @@ while True:
                     if "opencv" not in check_running_threads():
                         logger.info("Starting OpenCV")
                         threading.Thread(target=capture, name="opencv", daemon=True).start()
-
+            else:
+                drawable_gps_data = None
             # elif parsed_data.status == 'V':
             #     logger.warning(f'Invalid GPS info!!: {parsed_data.status}')
             #     time.sleep(5)
