@@ -923,7 +923,7 @@ while True:
                         # id_number = garbageLocation[2]
                         take_picture = True
                         logger.info(f'Found a close garbage. '
-                                    f'Distance is: {round(distance, 2)} meters and garbage_id: {id_number}')
+                                    f'Distance is: {round(min_distance, 2)} meters and garbage_id: {id_number}')
 
                     if on_the_move:
                         vehicle_steady = False

@@ -863,7 +863,7 @@ while True:
                         pass_the_id = 0
                         frame_count = 0
                         logger.info(f'Found a close garbage. '
-                                    f'Distance is: {round(distance, 2)} meters and garbage_id: {id_number}')
+                                    f'Distance is: {round(min_distance, 2)} meters and garbage_id: {id_number}')
                         video_date = date_local.strftime('%Y-%m-%d__%H-%M-%S,,')
                         filename = f'{video_date}{location_gps[0]},{location_gps[1]},{id_number}'
                         save_picture = True
