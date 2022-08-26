@@ -9,11 +9,10 @@ import os
 import shutil
 import socket
 import subprocess
-import sys
 import threading
 import time
 
-hostname = subprocess.check_output(["hostname"]).decode("utf-8").strip("\n")
+hostname = socket.gethostname()
 requirements = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/requirements.txt"
 
 log_file_name = f"{hostname}.log"
@@ -32,7 +31,6 @@ logger.debug("")
 logger.info("System Started.")
 
 try:
-    # import geopy.distance
     import pynmea2
     import requests
     import imutils
@@ -66,12 +64,6 @@ def get_date():
     return datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S_')
 
 
-def error_handling():
-    exception_type, exception_object, exception_traceback = sys.exc_info()
-    line_number = exception_traceback.tb_lineno
-    logger.error(f"Type: {exception_type}\tObject: {exception_object}\tLine number: {line_number}")
-
-
 def restart_system(restart_type=None, why=None):
     if restart_type == "info":
         logger.info(f"Restarting the system: {why}")
@@ -93,18 +85,18 @@ def write_json(json_data, json_file_name='locations.json'):
         json.dump(data, open(json_file_path, "w"))
 
     except:
-        error_handling()
+        logger.error(f"JSON write error: {json_file_path}", exc_info=True)
 
 
-def read_json(json_file):
+def read_json(json_file_read):
     try:
-        data = json.load(open(json_file, "r"))
+        data = json.load(open(json_file_read, "r"))
     except json.decoder.JSONDecodeError as json_error:
-        logger.warning(f"JSONDecodeError happened at {json_file}: {json_error.pos}. Trying to save the file...")
+        logger.warning(f"JSONDecodeError happened at {json_file_read}: {json_error.pos}. Trying to save the file...")
         if json_error.pos == 0:
             data = []
         else:
-            data = json.loads(open(json_file).read()[:json_error.pos])
+            data = json.loads(open(json_file_read).read()[:json_error.pos])
         logger.info(f"{len(data)} file info saved.")
     return data
 
@@ -133,13 +125,11 @@ def upload_data(file_type, file_path=None, file_data=None):
                 file_upload_type = "garbagedevice"
 
                 url_to_upload = url_harddrive + f"type={file_upload_type}&date={file_date}&time={file_time}"
-                result = MyRequestsClass(request_type="post", url=url_to_upload, files=files)
-                status_code = result.status_code
+                response = RequestHandler.post(url=url_to_upload, files=files)
 
-            if status_code == 200:
-                status = result.result.json()["status"]
-                if status == "success":
-                    uploaded_file = result.result.json()["filename"]
+            if response.status_code == 200:
+                if response.json()["status"] == "success":
+                    uploaded_file = response.json()["filename"]
                     # file_date = datetime.datetime.strptime(file_name.split(",,")[0], "%Y-%m-%d__%H-%M-%S")
                     file_lat, file_lng, file_id = file_name[:-4].split(",,")[1].split(",")
                     file_data = {"file_name": uploaded_file, "date": f"{date_of_file}",
@@ -149,47 +139,42 @@ def upload_data(file_type, file_path=None, file_data=None):
                                     "date": f"{date_of_file}", "lat": file_lat, "lng": file_lng, "location_id": file_id}
                     write_json(my_file_data, "uploaded_files.json")
 
-                    result = MyRequestsClass(request_type="post", url=url_image + hostname, json=file_data)
-                    if not result.status_code == 200:
-                        logger.warning(f"Video Name couldn't uploaded! "
-                                       f"Status Code: {result.status_code}:{result.error}")
+                    response = RequestHandler.post(url=url_image + hostname, json=file_data)
+                    if not response.status_code == 200:
+                        logger.warning(f"Video Name couldn't uploaded! Status Code: {response.status_code}")
                         write_json(file_data, "uploaded_videos.json")
 
                     os.remove(file_path)
 
                 else:
-                    logger.error(f"Video file couldn't uploaded! "
-                                 f"Status Code: {result.status_code}\tStatus: {result.error}")
+                    logger.error(f"Video file couldn't uploaded! Status Code: {response.status_code}")
 
             else:
-                logger.warning(f"Video file couldn't uploaded! Status Code: {status_code}:{result.error}")
+                logger.warning(f"Video file couldn't uploaded! Status Code: {response.status_code}")
 
         elif file_type == "location":
-            result = MyRequestsClass(request_type="post", url=url_location + hostname, json=file_data)
-            if not result.status_code == 200:
-                logger.warning(f"location couldn't uploaded! "
-                               f"Status Code: {result.status_code}:{result.error}")
+            response = RequestHandler.post(url=url_location + hostname, json=file_data)
+            if not response.status_code == 200:
+                logger.warning(f"location couldn't uploaded! Status Code: {response.status_code}")
                 write_json(file_data, "locations.json")
 
         elif file_type == "locations":
-            # with open(file_path) as file:
             location_json = read_json(file_path)
-            result = MyRequestsClass(request_type="post", url=url_location + hostname, json=location_json)
-            if result.status_code == 200:
+            response = RequestHandler.post(url=url_location + hostname, json=location_json)
+            if response.status_code == 200:
                 logger.info("locations.json uploaded")
                 os.remove(file_path)
             else:
-                logger.warning(f"locations.json upload warning: {result.status_code}:{result.error}")
+                logger.warning(f"locations.json upload warning: {response.status_code}")
 
         elif file_type == "uploaded_videos":
-            # with open(file_path) as file:
             videos_json = read_json(file_path)
-            result = MyRequestsClass(request_type="post", url=url_image + hostname, json=videos_json)
-            if result.status_code == 200:
+            response = RequestHandler.post(url=url_image + hostname, json=videos_json)
+            if response.status_code == 200:
                 logger.info("uploaded_videos.json uploaded")
                 os.remove(file_path)
             else:
-                logger.warning(f"uploaded_videos.json upload warning: {result.status_code}")
+                logger.warning(f"uploaded_videos.json upload warning: {response.status_code}")
 
         elif file_type == "uploaded_files":
             if os.path.getsize(file_path) / 1024 > 100:
@@ -208,7 +193,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                     os.remove(file_path)
 
     except:
-        error_handling()
+        logger.error(f"Error while uploading data!", exc_info=True)
 
 
 def get_folder_size(path_to_folder):
@@ -255,7 +240,7 @@ def check_folder():
                         f"uploaded in {upload_end_time} seconds. Ratio: {ratio}")
         time.sleep(60)
     except:
-        error_handling()
+        logger.error(f"Error while checking folder!", exc_info=True)
 
 
 def listen_to_server():
@@ -342,48 +327,64 @@ def listen_to_server():
 
     except socket.timeout:
         logger.warning("Server timeout in 60 seconds! Closing the connection.")
-        stream = False
         time.sleep(5)
     except ConnectionRefusedError as cre:
         logger.warning("Connection Refused! Probably server is not online..: ", cre)
-        stream = False
         time.sleep(5)
     except ConnectionAbortedError as cae:
         logger.warning("Connection closed by Client!: ", cae)
-        stream = False
         time.sleep(5)
     except ConnectionResetError as cse:
         logger.warning("Connection closed by server!: ", cse)
-        stream = False
         time.sleep(5)
     except:
-        error_handling()
-        stream = False
-        time.sleep(5)
+        logger.error(f"Error while listening to server!", exc_info=True)
+        time.sleep(30)
+
+    stream = False
 
 
-class MyRequestsClass:
-    def __init__(self, request_type=None, **kwargs):
-        self.result = None
-        self.status_code = 0
-        self.kwargs = kwargs
-        self.type = request_type
-        self.error = None
-        self.run()
-
-    def run(self):
+class RequestHandler:
+    @staticmethod
+    def check_connection(url="https://cdn.atiknakit.com"):
         try:
-            if "post" == self.type:
-                result = requests.post(**self.kwargs, timeout=180)
-            if "get" == self.type:
-                result = requests.get(**self.kwargs, timeout=30)
-            self.status_code = result.status_code
-            self.result = result
-            self.error = result.text
+            requests.head(url, timeout=5)
+            return True
+        except requests.exceptions.ConnectionError:
+            pass
+        except requests.Timeout:
+            pass
         except:
-            self.error = sys.exc_info()
-            # logger.error("", exc_info=True)
-            error_handling()
+            logger.error(f"Error while checking connection!", exc_info=True)
+        return False
+
+    @staticmethod
+    def post(url, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = 60
+        try:
+            return requests.post(url=url, **kwargs)
+        except requests.exceptions.ConnectionError:
+            logging.warning("Connection Error while sending request to {}".format(url))
+        except requests.Timeout:
+            logger.warning("Timeout while posting to {}".format(url))
+        except:
+            logger.error("Error in post request to {}".format(url), exc_info=True)
+        return requests.Response()
+
+    @staticmethod
+    def get(url, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = 60
+        try:
+            return requests.get(url=url, **kwargs)
+        except requests.exceptions.ConnectionError:
+            logging.warning("Connection error while getting from {}".format(url))
+        except requests.Timeout:
+            logging.warning("Timeout while getting from {}".format(url))
+        except:
+            logging.error("Error in get request to {}".format(url), exc_info=True)
+        return requests.Response()
 
 
 def draw_text_and_rectangle(frame, text, x=0, y=0, font_scale=15, img_color=(255, 255, 255), rect_color=(0, 0, 0)):
@@ -419,24 +420,6 @@ def get_drawable_gps_data(parsed_gps_data):
             f"{round(parsed_gps_data.longitude, 6)}{parsed_gps_data.lon_dir},"
             f"{'None' if parsed_gps_data.true_course is None else parsed_gps_data.true_course}"
             f"{str(int(parsed_gps_data.spd_over_grnd * 1.852)).zfill(3)}kmh")
-
-
-# def check_location_and_speed(gps_data, locations, maximum_distance=50, speed_limit=5, on_the_move=False):
-#     min_distance = float("inf")
-#     closest_location = None
-#
-#     for loc in locations:
-#         distance = calculate_distance(gps_data.gps_location, loc)
-#         if distance < min_distance:
-#             min_distance = distance
-#             closest_location = loc
-#     if maximum_distance > min_distance:
-#         if on_the_move:
-#             if gps_data.speed_in_kmh > speed_limit:
-#                 return closest_location["id"]
-#         else:
-#             if gps_data.speed_in_kmh < speed_limit:
-#                 return closest_location["id"]
 
 
 def capture():
@@ -478,7 +461,6 @@ def capture():
         global pass_the_id
         global frame_sent
         global total_bytes_sent
-        # global drawable_gps_data
 
         video_save = False
         streaming_width = 720
@@ -492,8 +474,7 @@ def capture():
                     time.sleep(10)
                     # restart_system("warning", f"ret was {ret}: {camera_is}")
                 except:
-                    # logger.error("Camera not Found!", exc_info=True)
-                    error_handling()
+                    logger.error("Camera not Found!", exc_info=True)
                     time.sleep(10)
                     # restart_system("error", "Camera not Found!")
                 break
@@ -504,8 +485,7 @@ def capture():
                     frame = imutils.resize(img, width=streaming_width)
 
                     frame = draw_text_and_rectangle(frame,
-                                                    datetime.datetime.now().strftime("%Y-%m-%d  %H:%M:%S"),
-                                                    x=20, y=20)
+                                                    datetime.datetime.now().strftime("%Y-%m-%d  %H:%M:%S"), x=20, y=20)
                     if drawable_gps_data is not None:
                         frame = draw_text_and_rectangle(frame, drawable_gps_data, x=20, y=frame.shape[0] - 40)
 
@@ -516,7 +496,7 @@ def capture():
                     server.sendall(message)
                     frame_sent += 1
                 except:
-                    error_handling()
+                    logger.error("Error while sending frame", exc_info=True)
                     stream = False
 
             if save_picture:
@@ -567,7 +547,7 @@ def capture():
             # cv2.waitKey(set_fps)
 
     except:
-        error_handling()
+        logger.error("Error while capturing", exc_info=True)
 
 
 def check_running_threads():
@@ -612,9 +592,7 @@ def check_internet():
                     file.truncate()
                 logger.info(f"{log_file_upload} copied to {files_folder} folder.")
 
-            requests.get(url_check, timeout=timeout_to_download)
-
-            connection = True
+            connection = RequestHandler.check_connection()
 
             if connection:
                 if "check_folder" not in check_running_threads():
@@ -629,8 +607,8 @@ def check_internet():
                     logger.info("Checking for updates...")
 
                     device_information = requests.get(device_informations, timeout=timeout_to_download).json()[hostname]
-                    with open("config.json", "w") as config:
-                        json.dump(device_information, config)
+                    with open("config.json", "w") as save_config:
+                        json.dump(device_information, save_config)
                     device_type = device_information["device_type"]
                     code = requests.get(url_of_project + device_information["program"], timeout=timeout_to_download)
                     if code.status_code == 200:
@@ -676,21 +654,18 @@ def check_internet():
                         #     os.remove(log_file_upload)
 
                     pTimeCheck = time.time()
+                    time.sleep(20)
+
+                    continue
 
         except requests.exceptions.ConnectionError:
-            if connection:
-                connection = False
             logger.info("There is no Internet!")
         except requests.exceptions.ReadTimeout as timeout_error:
-            if connection:
-                connection = False
             logger.warning(f"Download timeout in {timeout_to_download} seconds: {timeout_error}")
         except:
-            error_handling()
-            if connection:
-                connection = False
-                logger.info("There is no connection!")
+            logger.error("Error while checking internet", exc_info=True)
 
+        connection = False
         time.sleep(20)
 
 
@@ -755,8 +730,8 @@ except:
 
 try:
     values = requests.get(url_upload + hostname, timeout=20).json()
-    with open('values.txt', 'w') as jsonfile:
-        json.dump(values, jsonfile)
+    with open('values.txt', 'w') as json_file:
+        json.dump(values, json_file)
     garbageLocations = values['garbageLocations']
     logger.info("Values are taken from internet.")
 
@@ -769,18 +744,32 @@ logger.info(f"Hostname: {hostname}\tDevice Type: {device_type}\tGPS Port: {gps_p
 
 threading.Thread(target=check_internet, name="check_internet", daemon=True).start()
 
+
+class EmptyGPSDataError(Exception):
+    """ Exception raised when there is no GPS data available. """
+    pass
+
+
+class InvalidGPSDataError(Exception):
+    """ Exception raised when the GPS data is invalid. """
+    pass
+
+
 while True:
     try:
         with serial.Serial(port=gps_port, baudrate=9600, bytesize=8, timeout=1,
                            stopbits=serial.STOPBITS_ONE) as gps_data:
             parse_error_count = 0
-            invalid_data_count = 0
+            invalid_gps_count = 0
+            empty_gps_count = 0
+            max_error_count = 100
+
             valid_gps_data = False
             while not valid_gps_data:
                 try:
                     new_data = gps_data.readline().decode()
                     if len(new_data) < 1:
-                        raise ValueError("Incoming GPS Data is empty")
+                        raise EmptyGPSDataError("No GPS data available!")
 
                     parsed_data = pynmea2.parse(new_data)
                     if parsed_data.sentence_type == "RMC":
@@ -788,27 +777,29 @@ while True:
                             valid_gps_data = True
                             break
                         else:
-                            invalid_data_count += 1
-                            if invalid_data_count >= 10:
-                                logger.warning(f"Invalid GPS Data: {invalid_data_count}")
-                                invalid_data_count = 0
-                                break
-                            continue
+                            raise InvalidGPSDataError("GPS data is invalid!")
 
-                except pynmea2.nmea.ParseError as parse_error:
-                    parse_error_count = parse_error_count + 1
-                    if parse_error_count >= 10:
-                        logger.warning(f"Parse Error happened {parse_error_count} times!")
-                        time.sleep(1)
+                except pynmea2.nmea.ParseError:
+                    parse_error_count += 1
+                    if parse_error_count >= max_error_count:
+                        logging.warning(f"Parse Error happened {parse_error_count} times!")
                         break
-                    continue
-                except ValueError as verr:
-                    logger.warning(f"{verr}")
-                    time.sleep(1)
-                    break
+
+                except InvalidGPSDataError:
+                    invalid_gps_count += 1
+                    if invalid_gps_count >= max_error_count:
+                        logging.warning(f"Invalid GPS data happened {invalid_gps_count} times!")
+                        break
+
+                except EmptyGPSDataError:
+                    empty_gps_count += 1
+                    if empty_gps_count >= max_error_count:
+                        logging.warning(f"Empty GPS data happened {empty_gps_count} times!")
+                        break
+
                 except:
-                    error_handling()
-                    time.sleep(5)
+                    logging.error("Unexpected GPS Parse error:", exc_info=True)
+                    time.sleep(60)
                     break
 
             if valid_gps_data:
@@ -857,32 +848,31 @@ while True:
                     #     logger.info(f'Distance: {round(distance, 2)} meters')
 
                 if not save_picture:
-                    distances = []
-                    pTimeCheckLocations = time.time()
+
+                    min_distance = float("inf")
                     for garbageLocation in garbageLocations:
                         distance = calculate_distance(location_gps, garbageLocation[:2])
-                        distances.append(distance)
-                        if distance < detectLocationDistance and speed_in_kmh > 5:
-                            id_number = garbageLocation[2]
-                            if id_number == pass_the_id:
-                                continue
-                            pass_the_id = 0
-                            frame_count = 0
-                            logger.info(f'Found a close garbage. '
-                                        f'Distance is: {round(distance, 2)} meters and garbage_id: {id_number}')
-                            # logger.info(f'Distance Detection Interval: {detectLocationDistance}')
-                            video_date = date_local.strftime('%Y-%m-%d__%H-%M-%S,,')
-                            filename = f'{video_date}{location_gps[0]},{location_gps[1]},{id_number}'
-                            save_picture = True
-                            break
+                        if distance < min_distance:
+                            min_distance = distance
+                            min_distance_location = garbageLocation
 
-                    minDistance = min(distances)
+                    if min_distance < detectLocationDistance and speed_in_kmh > 5:
+                        id_number = min_distance_location[2]
+                        if id_number == pass_the_id:
+                            continue
+                        pass_the_id = 0
+                        frame_count = 0
+                        logger.info(f'Found a close garbage. '
+                                    f'Distance is: {round(distance, 2)} meters and garbage_id: {id_number}')
+                        video_date = date_local.strftime('%Y-%m-%d__%H-%M-%S,,')
+                        filename = f'{video_date}{location_gps[0]},{location_gps[1]},{id_number}'
+                        save_picture = True
 
                     if on_the_move:
                         vehicle_steady = False
-                        logger.info(f'Minimum distance = {round(minDistance, 2)} meters')
+                        logger.info(f'Minimum distance = {round(min_distance, 2)} meters')
 
-                    if not on_the_move:
+                    else:
                         if calculate_distance(location_gps, santiye_location) < 200:
                             logger.info(f"Vehicle is in the station.")
                             time.sleep(30)
@@ -890,29 +880,26 @@ while True:
                             if not vehicle_steady:
                                 logger.info(f"The vehicle is steady. Location: {location_gps}")
                                 vehicle_steady = True
-                            if minDistance > 100:
-                                time.sleep(minDistance / 20)
+                            if min_distance > 100:
+                                time.sleep(min_distance / 20)
 
-                if minDistance >= 100 and not stream:
+                if min_distance >= 100 and not stream:
                     if "opencv" in check_running_threads():
                         logger.info("Closing camera...")
                         threadKill = True
 
-                elif minDistance < 100 and pass_the_id == 0:
+                elif min_distance < 100 and pass_the_id == 0:
                     if "opencv" not in check_running_threads():
                         logger.info("Starting OpenCV")
                         threading.Thread(target=capture, name="opencv", daemon=True).start()
             else:
                 drawable_gps_data = None
-            # elif parsed_data.status == 'V':
-            #     logger.warning(f'Invalid GPS info!!: {parsed_data.status}')
-            #     time.sleep(5)
 
     except serial.serialutil.SerialException:
-        error_handling()
+        logger.error("Could not open serial port!", exc_info=True)
         time.sleep(60)
-        restart_system("error", "Couldn't find the GPS Device!")
+        # restart_system("error", "Couldn't find the GPS Device!")
 
     except:
-        error_handling()
-        time.sleep(5)
+        logger.error("Unexpected GPS error:", exc_info=True)
+        time.sleep(30)
