@@ -840,7 +840,7 @@ while True:
                         on_the_move = False
 
                 if save_picture:
-                    distance = calculate_distance(location_gps, garbageLocation[:2])
+                    distance = calculate_distance(location_gps, min_distance_location[:2])
                     if distance > detectLocationDistance:
                         save_picture = False
                         logger.info(f'Garbage is out of reach. Distance is: {round(distance, 2)}')
