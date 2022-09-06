@@ -12,8 +12,7 @@ import subprocess
 import threading
 import time
 
-# hostname = socket.gethostname()
-hostname = "34FN9970"
+hostname = socket.gethostname()
 requirements = "https://raw.githubusercontent.com/Salih800/ContainerProject/main/requirements.txt"
 
 log_file_name = f"{hostname}.log"
