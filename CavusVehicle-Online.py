@@ -422,6 +422,31 @@ def get_drawable_gps_data(parsed_gps_data):
             f"{str(int(parsed_gps_data.spd_over_grnd * 1.852)).zfill(3)}kmh")
 
 
+def send_frame(frame_to_send, streaming_width):
+    global total_bytes_sent, frame_sent, stream, sending_frame
+    sending_frame = True
+    try:
+
+        frame_to_send = imutils.resize(frame_to_send, width=streaming_width)
+
+        frame_to_send = draw_text_and_rectangle(frame_to_send,
+                                                datetime.datetime.now().strftime("%Y-%m-%d  %H:%M:%S"), x=20, y=20)
+        if drawable_gps_data is not None:
+            frame_to_send = draw_text_and_rectangle(frame_to_send, drawable_gps_data,
+                                                    x=20, y=frame_to_send.shape[0] - 40)
+
+        encoded, buffer = cv2.imencode('.jpg', frame_to_send, [cv2.IMWRITE_JPEG_QUALITY, 50])
+        bosluk = b"$"
+        message = bosluk + base64.b64encode(buffer) + bosluk
+        total_bytes_sent += len(message)
+        server.sendall(message)
+        frame_sent += 1
+    except:
+        logger.error("Error while sending frame", exc_info=True)
+        stream = False
+    sending_frame = False
+
+
 def capture():
     try:
         camera_path = device_information["camera-path"]
@@ -480,24 +505,8 @@ def capture():
                 break
 
             if stream:
-                try:
-
-                    frame = imutils.resize(img, width=streaming_width)
-
-                    frame = draw_text_and_rectangle(frame,
-                                                    datetime.datetime.now().strftime("%Y-%m-%d  %H:%M:%S"), x=20, y=20)
-                    if drawable_gps_data is not None:
-                        frame = draw_text_and_rectangle(frame, drawable_gps_data, x=20, y=frame.shape[0] - 40)
-
-                    encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
-                    bosluk = b"$"
-                    message = bosluk + base64.b64encode(buffer) + bosluk
-                    total_bytes_sent += len(message)
-                    server.sendall(message)
-                    frame_sent += 1
-                except:
-                    logger.error("Error while sending frame", exc_info=True)
-                    stream = False
+                if not sending_frame:
+                    threading.Thread(target=send_frame, args=(img, streaming_width)).start()
 
             if save_picture:
                 if not video_save:
@@ -714,6 +723,7 @@ server_msg = "wait"
 old_location_gps = [0, 0]
 on_the_move = False
 drawable_gps_data = None
+sending_frame = False
 
 if not os.path.isdir(files_folder):
     logger.info(f"Making {files_folder} folder")
