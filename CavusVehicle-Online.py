@@ -658,6 +658,10 @@ def check_internet():
 
                     continue
 
+            else:
+                logger.warning("No internet connection!")
+                time.sleep(5)
+
         except requests.exceptions.ConnectionError:
             logger.info("There is no Internet!")
         except requests.exceptions.ReadTimeout as timeout_error:
