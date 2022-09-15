@@ -115,6 +115,7 @@ def upload_data(file_type, file_path=None, file_data=None):
                 logger.warning(f"{file_path} log file couldn't uploaded! Rclone Status: {rclone_log}")
 
         elif file_type == "video":
+            logger.info(f"Uploading {file_path} to server.")
             file_name = os.path.basename(file_path)
             with open(file_path, 'rb') as video:
                 files = {'file': (file_name, video, 'multipart/form-data', {'Expires': '0'})}
@@ -221,7 +222,9 @@ def check_folder():
         if len(files_list) > 1:
             logger.info(f"Files in folder: {len(files_list)}")
         for file_to_upload in files_list:
+            print(f"Uploading {file_to_upload}")
             if connection:
+                print("Connection is True")
                 if file_to_upload.endswith(".log"):
                     upload_data(file_type="log", file_path=f"{files_folder}/{file_to_upload}")
                 if os.path.isfile(f"{files_folder}/uploaded_files.json"):
