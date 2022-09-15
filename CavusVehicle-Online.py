@@ -222,9 +222,7 @@ def check_folder():
         if len(files_list) > 1:
             logger.info(f"Files in folder: {len(files_list)}")
         for file_to_upload in files_list:
-            print(f"Uploading {file_to_upload}")
-            if connection:
-                print("Connection is True")
+            if RequestHandler.check_connection():
                 if file_to_upload.endswith(".log"):
                     upload_data(file_type="log", file_path=f"{files_folder}/{file_to_upload}")
                 if os.path.isfile(f"{files_folder}/uploaded_files.json"):
@@ -604,9 +602,9 @@ def check_internet():
                     file.truncate()
                 logger.info(f"{log_file_upload} copied to {files_folder} folder.")
 
-            connection = RequestHandler.check_connection()
+            # connection = RequestHandler.check_connection()
 
-            if connection:
+            if RequestHandler.check_connection():
                 if "check_folder" not in check_running_threads():
                     logger.info("Checking folder...")
                     threading.Thread(target=check_folder, name="check_folder", daemon=True).start()
@@ -846,7 +844,7 @@ while True:
                         location_data = {"date": date_local.strftime("%Y-%m-%d %H:%M:%S"), "lat": location_gps[0],
                                          "lng": location_gps[1], "speed": speed_in_kmh}
                         old_location_gps = location_gps
-                        if connection:
+                        if RequestHandler.check_connection():
                             threading.Thread(target=upload_data, name="location_upload",
                                              kwargs={"file_type": "location", "file_data": location_data},
                                              daemon=True).start()
