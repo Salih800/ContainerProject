@@ -362,11 +362,11 @@ class RequestHandler:
     @staticmethod
     def post(url, **kwargs):
         if "timeout" not in kwargs:
-            kwargs["timeout"] = 60
+            kwargs["timeout"] = 300
         try:
             return requests.post(url=url, **kwargs)
         except requests.exceptions.ConnectionError:
-            logging.warning("Connection Error while sending request to {}".format(url))
+            logger.warning("Connection Error while sending request to {}".format(url))
         except requests.Timeout:
             logger.warning("Timeout while posting to {}".format(url))
         except:
@@ -376,15 +376,15 @@ class RequestHandler:
     @staticmethod
     def get(url, **kwargs):
         if "timeout" not in kwargs:
-            kwargs["timeout"] = 60
+            kwargs["timeout"] = 300
         try:
             return requests.get(url=url, **kwargs)
         except requests.exceptions.ConnectionError:
-            logging.warning("Connection error while getting from {}".format(url))
+            logger.warning("Connection error while getting from {}".format(url))
         except requests.Timeout:
-            logging.warning("Timeout while getting from {}".format(url))
+            logger.warning("Timeout while getting from {}".format(url))
         except:
-            logging.error("Error in get request to {}".format(url), exc_info=True)
+            logger.error("Error in get request to {}".format(url), exc_info=True)
         return requests.Response()
 
 
